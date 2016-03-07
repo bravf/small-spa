@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Single App</title>
+    <link rel="stylesheet" href="/static/styles/libs/semantic.min.css">
+</head>
+<body>
+
+<script src="/static/scripts/libs/jquery-1.11.3.min.js"></script>
+<script src="/static/scripts/libs/small-spa/small-spa.js"></script>
+<script src="/static/scripts/libs/semantic.min.js"></script>
+</body>
+</html>
