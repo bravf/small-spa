@@ -1,7 +1,96 @@
 declare let $
 import spaConf = require('./small-spa-conf')
 
-class Sspa {
+
+interface IScriptNode extends HTMLScriptElement{
+    onreadystatechange: Function,
+    readyState: string
+}
+interface ILinkNode extends HTMLLinkElement{
+    attachEvent: Function
+}
+
+class Load{
+    static loadJs(url, callback){
+        let node = <IScriptNode>document.createElement('script')
+        node.src = url
+        document.getElementsByTagName('head')[0].appendChild(node)
+
+        let isIE = navigator.userAgent.indexOf('MSIE') == -1 ? false : true
+
+        if (isIE) {
+            node.onreadystatechange = () => {
+                if (node.readyState && node.readyState == 'loading'){
+                    return
+                }
+                if (callback) {
+                    callback()
+                }
+            }
+        }
+        else {
+            node.onload = function() {
+                if (callback) {
+                    callback()
+                }
+            }
+        }
+    }
+
+    // 参考seajs
+    static loadCss(url, callback){
+        let node = <ILinkNode>document.createElement('link')
+        node.rel = 'stylesheet'
+        node.href = url
+        document.getElementsByTagName('head')[0].appendChild(node)
+
+        if (node.attachEvent){
+            node.attachEvent('onload', callback)
+        }
+        else {
+            setTimeout(() => {
+                poll(node, callback)
+            }, 0)
+        }
+
+        function poll(_elem, callback) {
+            let isLoaded = false
+            let sheet = _elem['sheet']
+            let isOldWebKit = parseInt(navigator.userAgent.replace(/.*AppleWebKit\/(\d+)\..*/, '$1')) < 536
+
+            if (isOldWebKit) { //webkit 版本小于 536
+                if (sheet) {
+                    isLoaded = true
+                }
+            }
+            else if (sheet) {
+                try {
+                    if (sheet.cssRules) {
+                        isLoaded = true
+                    }
+                }
+                catch (ex) {
+                    if (ex.code === 'NS_ERROR_DOM_SECURITY_ERR') {
+                        isLoaded = true
+                    }
+                }
+            }
+
+            if (isLoaded) {
+                setTimeout(() => {
+                    callback()
+                }, 1)
+            }
+            else {
+                setTimeout(() => {
+                    poll(_elem, callback)
+                }, 1)
+            }
+        }
+    }
+}
+
+class Sspa{
     static $event = $('<div/>')
 
     static onHashChange(){
@@ -9,7 +98,18 @@ class Sspa {
         Sspa.handlePages(hash)
     }
 
+    static beforeHandle(func){
+        Sspa.$event.on('before-handle', func)
+        return Sspa
+    }
+    static afterHandle(func){
+        Sspa.$event.on('after-handle', func)
+        return Sspa
+    }
+
     static handlePages(hash){
+        Sspa.$event.trigger('before-handle')
+
         let currPages = [], page = spaConf.page
         let hashKeys = hash.split('/')
 
@@ -50,52 +150,72 @@ class Sspa {
                 Sspa.$event.trigger('page-change', [page.sspa_path])
                 Sspa.showPage(page)
             })
+
+            Sspa.$event.trigger('after-handle')
         })
     }
 
     static showPage(page) {
         page.__$container.find('div[sspa-page-id]').hide()
         page.__$container.find(`div[sspa-page-id="${page.sspa_path}"]`).show()
+        document.title = page.__title || 'small-spa'
     }
 
     static loadPage(page) {
+        let retDefer = $.Deferred()
         let $pageWrapper = $('<div/>').attr('sspa-page-id', page.sspa_path).hide()
         page.__$pageWrapper = $pageWrapper
 
         let timeTag = +new Date
-        return $.get(`${spaConf.baseURL}${page.sspa_path}?_t=${timeTag}`).done((html) => {
-            let lines = html.split('\n')
-            let cssNodePath = lines[0]
+        $.get(`${spaConf.baseURL}${page.sspa_path}?_t=${timeTag}`).done((html) => {
+            $pageWrapper.append(html)
 
-            if (cssNodePath.indexOf('.css') != -1) {
-                lines.shift()
-                Sspa.loadCss(cssNodePath)
+            let defers = []
+
+            let $css = $pageWrapper.find('link')
+            if ($css.length){
+                defers.push(
+                    Sspa.loadCss($css.eq(0).attr('href'))
+                )
             }
 
-            let jsNodePath = lines[lines.length - 1]
-            if (jsNodePath.indexOf('.js') != -1) {
-                lines.pop()
-                Sspa.loadJs(jsNodePath)
+            let $js = $pageWrapper.find('script')
+            if ($js.length){
+                defers.push(
+                    Sspa.loadJs($js.eq(0).attr('src'))
+                )
             }
 
-            $pageWrapper.append(lines.join('\n'))
+            let $title = $pageWrapper.find('title')
+            if ($title.length){
+                page.__title = $title.html()
+            }
+
+            $css.remove()
+            $js.remove()
+
+            $.when.apply(null, defers).done(() => {
+                retDefer.resolve()
+            })
         })
+
+        return retDefer
     }
 
-    static loadCss(nodePath) {
-        let path = $(nodePath).prop('href')
-
-        let node = document.createElement('link')
-        node.rel = 'stylesheet'
-        node.href = path
-
-        document.getElementsByTagName('head')[0].appendChild(node)
+    static loadCss(path) {
+        let defer = $.Deferred()
+        Load.loadCss(path, () => {
+            defer.resolve()
+        })
+        return defer
     }
 
     static loadJs(path) {
-        let node = document.createElement('script')
-        node.src = $(path).prop('src')
-        document.getElementsByTagName('head')[0].appendChild(node)
+        let defer = $.Deferred()
+        Load.loadJs(path, () => {
+            defer.resolve()
+        })
+        return defer
     }
 
     static init() {
@@ -108,5 +228,4 @@ class Sspa {
     }
 }
 
-Sspa.init()
 this.Sspa = Sspa

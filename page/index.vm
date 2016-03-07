@@ -11,3 +11,23 @@
 <script src="/static/scripts/libs/semantic.min.js"></script>
 </body>
 </html>
+
+<script>
+var $loading = $('<div/>').appendTo($('body'))
+    .text('loading...')
+    .css({
+        'position':'fixed',
+        'width':'100%',
+        'text-align':'center',
+        'top':'300px',
+        'font-size':'30px'
+    })
+
+Sspa.beforeHandle(function (){
+    $loading.show()
+})
+.afterHandle(function (){
+    $loading.hide()
+})
+.init()
+</script>

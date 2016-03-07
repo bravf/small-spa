@@ -1,5 +1,80 @@
 "use strict";
 var spaConf = require('./small-spa-conf');
+var Load = (function () {
+    function Load() {
+    }
+    Load.loadJs = function (url, callback) {
+        var node = document.createElement('script');
+        node.src = url;
+        document.getElementsByTagName('head')[0].appendChild(node);
+        var isIE = navigator.userAgent.indexOf('MSIE') == -1 ? false : true;
+        if (isIE) {
+            node.onreadystatechange = function () {
+                if (node.readyState && node.readyState == 'loading') {
+                    return;
+                }
+                if (callback) {
+                    callback();
+                }
+            };
+        }
+        else {
+            node.onload = function () {
+                if (callback) {
+                    callback();
+                }
+            };
+        }
+    };
+    // 参考seajs
+    Load.loadCss = function (url, callback) {
+        var node = document.createElement('link');
+        node.rel = 'stylesheet';
+        node.href = url;
+        document.getElementsByTagName('head')[0].appendChild(node);
+        if (node.attachEvent) {
+            node.attachEvent('onload', callback);
+        }
+        else {
+            setTimeout(function () {
+                poll(node, callback);
+            }, 0);
+        }
+        function poll(_elem, callback) {
+            var isLoaded = false;
+            var sheet = _elem['sheet'];
+            var isOldWebKit = parseInt(navigator.userAgent.replace(/.*AppleWebKit\/(\d+)\..*/, '$1')) < 536;
+            if (isOldWebKit) {
+                if (sheet) {
+                    isLoaded = true;
+                }
+            }
+            else if (sheet) {
+                try {
+                    if (sheet.cssRules) {
+                        isLoaded = true;
+                    }
+                }
+                catch (ex) {
+                    if (ex.code === 'NS_ERROR_DOM_SECURITY_ERR') {
+                        isLoaded = true;
+                    }
+                }
+            }
+            if (isLoaded) {
+                setTimeout(function () {
+                    callback();
+                }, 1);
+            }
+            else {
+                setTimeout(function () {
+                    poll(_elem, callback);
+                }, 1);
+            }
+        }
+    };
+    return Load;
+}());
 var Sspa = (function () {
     function Sspa() {
     }
@@ -7,7 +82,16 @@ var Sspa = (function () {
         var hash = location.hash.slice(1);
         Sspa.handlePages(hash);
     };
+    Sspa.beforeHandle = function (func) {
+        Sspa.$event.on('before-handle', func);
+        return Sspa;
+    };
+    Sspa.afterHandle = function (func) {
+        Sspa.$event.on('after-handle', func);
+        return Sspa;
+    };
     Sspa.handlePages = function (hash) {
+        Sspa.$event.trigger('before-handle');
         var currPages = [], page = spaConf.page;
         var hashKeys = hash.split('/');
         //找到hash每一项对应的page
@@ -41,42 +125,55 @@ var Sspa = (function () {
                 Sspa.$event.trigger('page-change', [page.sspa_path]);
                 Sspa.showPage(page);
             });
+            Sspa.$event.trigger('after-handle');
         });
     };
     Sspa.showPage = function (page) {
         page.__$container.find('div[sspa-page-id]').hide();
         page.__$container.find("div[sspa-page-id=\"" + page.sspa_path + "\"]").show();
+        document.title = page.__title || 'small-spa';
     };
     Sspa.loadPage = function (page) {
+        var retDefer = $.Deferred();
         var $pageWrapper = $('<div/>').attr('sspa-page-id', page.sspa_path).hide();
         page.__$pageWrapper = $pageWrapper;
         var timeTag = +new Date;
-        return $.get("" + spaConf.baseURL + page.sspa_path + "?_t=" + timeTag).done(function (html) {
-            var lines = html.split('\n');
-            var cssNodePath = lines[0];
-            if (cssNodePath.indexOf('.css') != -1) {
-                lines.shift();
-                Sspa.loadCss(cssNodePath);
+        $.get("" + spaConf.baseURL + page.sspa_path + "?_t=" + timeTag).done(function (html) {
+            $pageWrapper.append(html);
+            var defers = [];
+            var $css = $pageWrapper.find('link');
+            if ($css.length) {
+                defers.push(Sspa.loadCss($css.eq(0).attr('href')));
             }
-            var jsNodePath = lines[lines.length - 1];
-            if (jsNodePath.indexOf('.js') != -1) {
-                lines.pop();
-                Sspa.loadJs(jsNodePath);
+            var $js = $pageWrapper.find('script');
+            if ($js.length) {
+                defers.push(Sspa.loadJs($js.eq(0).attr('src')));
             }
-            $pageWrapper.append(lines.join('\n'));
+            var $title = $pageWrapper.find('title');
+            if ($title.length) {
+                page.__title = $title.html();
+            }
+            $css.remove();
+            $js.remove();
+            $.when.apply(null, defers).done(function () {
+                retDefer.resolve();
+            });
         });
+        return retDefer;
     };
-    Sspa.loadCss = function (nodePath) {
-        var path = $(nodePath).prop('href');
-        var node = document.createElement('link');
-        node.rel = 'stylesheet';
-        node.href = path;
-        document.getElementsByTagName('head')[0].appendChild(node);
+    Sspa.loadCss = function (path) {
+        var defer = $.Deferred();
+        Load.loadCss(path, function () {
+            defer.resolve();
+        });
+        return defer;
     };
     Sspa.loadJs = function (path) {
-        var node = document.createElement('script');
-        node.src = $(path).prop('src');
-        document.getElementsByTagName('head')[0].appendChild(node);
+        var defer = $.Deferred();
+        Load.loadJs(path, function () {
+            defer.resolve();
+        });
+        return defer;
     };
     Sspa.init = function () {
         $('body').addClass('body');
@@ -88,5 +185,4 @@ var Sspa = (function () {
     Sspa.$event = $('<div/>');
     return Sspa;
 }());
-Sspa.init();
 this.Sspa = Sspa;
