@@ -1,6 +1,7 @@
 "use strict";
 exports.baseURL = '//s1.mljr.com/crm-pc';
 exports.page = {
+    default: null,
     hello: {
         sspa_path: '/static/htmls/hello/hello.html',
         sspa_container: 'body'
@@ -18,3 +19,4 @@ exports.page = {
         }
     }
 };
+exports.page.default = exports.page.hello;

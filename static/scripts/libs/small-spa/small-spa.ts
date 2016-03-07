@@ -26,6 +26,10 @@ class Sspa {
             }
         }
 
+        if (currPages.length == 0){
+            currPages.push(spaConf.page.default)
+        }
+
         //加载未加载的page
         let defers = []
         currPages.forEach((page, _) => {

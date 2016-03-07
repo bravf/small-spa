@@ -21,6 +21,9 @@ var Sspa = (function () {
                 break;
             }
         }
+        if (currPages.length == 0) {
+            currPages.push(spaConf.page.default);
+        }
         //加载未加载的page
         var defers = [];
         currPages.forEach(function (page, _) {

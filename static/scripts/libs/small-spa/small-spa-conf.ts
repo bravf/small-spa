@@ -1,6 +1,7 @@
 export let baseURL = '//s1.mljr.com/crm-pc'
 
 export let page = {
+    default: null,
     hello: {
         sspa_path: '/static/htmls/hello/hello.html',
         sspa_container: 'body'
@@ -19,3 +20,5 @@ export let page = {
         }
     }
 }
+
+page.default = page.hello
