@@ -43,6 +43,7 @@ class Sspa {
                 $pageContainer.append(page.__$pageWrapper)
                 page.__$container = $pageContainer
 
+                Sspa.$event.trigger('page-change', [page.sspa_path])
                 Sspa.showPage(page)
             })
         })
@@ -74,7 +75,6 @@ class Sspa {
             }
 
             $pageWrapper.append(lines.join('\n'))
-            Sspa.$event.trigger('page-change', [page.path])
         })
     }
 

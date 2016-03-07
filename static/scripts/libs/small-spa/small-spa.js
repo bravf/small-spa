@@ -35,6 +35,7 @@ var Sspa = (function () {
                 var $pageContainer = $(page.sspa_container);
                 $pageContainer.append(page.__$pageWrapper);
                 page.__$container = $pageContainer;
+                Sspa.$event.trigger('page-change', [page.sspa_path]);
                 Sspa.showPage(page);
             });
         });
@@ -60,7 +61,6 @@ var Sspa = (function () {
                 Sspa.loadJs(jsNodePath);
             }
             $pageWrapper.append(lines.join('\n'));
-            Sspa.$event.trigger('page-change', [page.path]);
         });
     };
     Sspa.loadCss = function (nodePath) {
