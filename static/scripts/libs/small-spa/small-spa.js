@@ -5,7 +5,7 @@ var Load = (function () {
     }
     Load.loadJs = function (url, callback) {
         var node = document.createElement('script');
-        node.src = url;
+        node.setAttribute('src', url);
         document.getElementsByTagName('head')[0].appendChild(node);
         var isIE = navigator.userAgent.indexOf('MSIE') == -1 ? false : true;
         if (isIE) {
@@ -29,8 +29,8 @@ var Load = (function () {
     // 参考seajs
     Load.loadCss = function (url, callback) {
         var node = document.createElement('link');
-        node.rel = 'stylesheet';
-        node.href = url;
+        node.setAttribute('rel', 'stylesheet');
+        node.setAttribute('href', url);
         document.getElementsByTagName('head')[0].appendChild(node);
         if (node.attachEvent) {
             node.attachEvent('onload', callback);

@@ -13,7 +13,7 @@ interface ILinkNode extends HTMLLinkElement{
 class Load{
     static loadJs(url, callback){
         let node = <IScriptNode>document.createElement('script')
-        node.src = url
+        node.setAttribute('src', url)
         document.getElementsByTagName('head')[0].appendChild(node)
 
         let isIE = navigator.userAgent.indexOf('MSIE') == -1 ? false : true
@@ -40,8 +40,8 @@ class Load{
     // 参考seajs
     static loadCss(url, callback){
         let node = <ILinkNode>document.createElement('link')
-        node.rel = 'stylesheet'
-        node.href = url
+        node.setAttribute('rel', 'stylesheet')
+        node.setAttribute('href', url)
         document.getElementsByTagName('head')[0].appendChild(node)
 
         if (node.attachEvent){
