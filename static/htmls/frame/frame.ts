@@ -1,8 +1,7 @@
 declare var $, Sspa
 
-let codePath = '/static/htmls/login/login.html'
+let pagePath = '/static/htmls/login/login.html'
 
-Sspa.$event.on('page-change', (e, path) => {
-    if (path == codePath) {
-    }
+Sspa.onPageShow(pagePath, () => {
+    console.log('page-show')
 })

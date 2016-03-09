@@ -23,10 +23,10 @@ var $loading = $('<div/>').appendTo($('body'))
         'font-size':'30px'
     })
 
-Sspa.beforeHandle(function (){
+Sspa.onStartHash(function (){
     $loading.show()
 })
-.afterHandle(function (){
+.onEndHash(function (){
     $loading.hide()
 })
 .init()

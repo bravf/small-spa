@@ -1,6 +1,5 @@
 declare let $
-import spaConf = require('./small-spa-conf')
-
+import sspaConf = require('./small-spa-conf')
 
 interface IScriptNode extends HTMLScriptElement{
     onreadystatechange: Function,
@@ -91,30 +90,48 @@ class Load{
 }
 
 class Sspa{
+    static pageParams = []
     static $event = $('<div/>')
 
     static onHashChange(){
-        let hash = location.hash.slice(1)
+        let hash = location.hash.slice(2)
         Sspa.handlePages(hash)
     }
 
-    static beforeHandle(func){
-        Sspa.$event.on('before-handle', func)
+    static triggerEvent(eventName, eventParams?) {
+        Sspa.$event.trigger(eventName, eventParams)
         return Sspa
     }
-    static afterHandle(func){
-        Sspa.$event.on('after-handle', func)
+
+    static onEvent(eventName, func){
+        Sspa.$event.on(eventName, func)
         return Sspa
+    }
+
+    static onStartHash(func){
+        return Sspa.onEvent('start-hash', func)
+    }
+    static onEndHash(func){
+        return Sspa.onEvent('end-hash', func)
+    }
+
+    static onPageShow(pagePath, func){
+        return Sspa.onEvent('page-show', (e, path) => {
+            if (pagePath == path) {
+                func()
+            }
+        })
     }
 
     static handlePages(hash){
-        Sspa.$event.trigger('before-handle')
+        Sspa.triggerEvent('start-hash')
 
-        let currPages = [], page = spaConf.page
+        let currPages = []
+        let page = sspaConf.page
         let hashKeys = hash.split('/')
 
         //找到hash每一项对应的page
-        for (let i = 0, hashKey; i < hashKeys.length; i++){
+        for (var i = 0, hashKey; i < hashKeys.length; i++){
             hashKey = hashKeys[i]
             page = page[hashKey]
 
@@ -126,8 +143,11 @@ class Sspa{
             }
         }
 
+        //剩余的当做页面的参数
+        Sspa.pageParams = hashKeys.slice(i)
+
         if (currPages.length == 0){
-            currPages.push(spaConf.page.default)
+            currPages.push(sspaConf.page.default)
         }
 
         //加载未加载的page
@@ -135,7 +155,11 @@ class Sspa{
         currPages.forEach((page, _) => {
             if (!page.__loaded){
                 page.__loaded = true
-                defers.push(Sspa.loadPage(page))
+
+                // 如果没有配置sspa_path，则是个虚page，起到命名空间作用
+                if (page.sspa_path){
+                    defers.push(Sspa.loadPage(page))
+                }
             }
         })
 
@@ -147,11 +171,10 @@ class Sspa{
                 $pageContainer.append(page.__$pageWrapper)
                 page.__$container = $pageContainer
 
-                Sspa.$event.trigger('page-change', [page.sspa_path])
                 Sspa.showPage(page)
             })
 
-            Sspa.$event.trigger('after-handle')
+            Sspa.triggerEvent('end-hash')
         })
     }
 
@@ -159,6 +182,7 @@ class Sspa{
         page.__$container.find('div[sspa-page-id]').hide()
         page.__$container.find(`div[sspa-page-id="${page.sspa_path}"]`).show()
         document.title = page.__title || 'small-spa'
+        Sspa.triggerEvent('page-show', [page.sspa_path])
     }
 
     static loadPage(page) {
@@ -167,7 +191,7 @@ class Sspa{
         page.__$pageWrapper = $pageWrapper
 
         let timeTag = +new Date
-        $.get(`${spaConf.baseURL}${page.sspa_path}?_t=${timeTag}`).done((html) => {
+        $.get(`${sspaConf.baseURL}${page.sspa_path}?_t=${timeTag}`).done((html) => {
             $pageWrapper.append(html)
 
             let defers = []
@@ -219,7 +243,6 @@ class Sspa{
     }
 
     static init() {
-        $('body').addClass('body')
         window.onhashchange = () => {
             Sspa.onHashChange()
         }

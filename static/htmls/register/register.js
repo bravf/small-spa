@@ -11,9 +11,6 @@ var Register = (function () {
     };
     return Register;
 }());
-Register.init();
-Sspa.$event.on('page-change', function (e, path) {
-    if (path == pagePath) {
-        Register.init();
-    }
+Sspa.onPageShow(pagePath, function () {
+    console.log('page-show');
 });

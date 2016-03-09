@@ -1,4 +1,4 @@
-var codePath = '/static/htmls/login/login.html';
+var pagePath = '/static/htmls/login/login.html';
 var Login = (function () {
     function Login() {
     }
@@ -11,9 +11,11 @@ var Login = (function () {
     };
     return Login;
 }());
-Login.init();
-Sspa.$event.on('page-change', function (e, path) {
-    if (path == codePath) {
-        Login.init();
-    }
+console.log(Sspa.pageParams);
+Sspa.onPageShow(pagePath, function () {
+    console.log('page-show');
 });
+// Sspa.onEndPage(pagePath, (params) => {
+//     console.log(params)
+//     console.log('page-end')
+// })
