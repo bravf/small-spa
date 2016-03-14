@@ -1,2 +1,0 @@
-# small-spa
-small-spa
