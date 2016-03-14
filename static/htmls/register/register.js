@@ -11,6 +11,6 @@ var Register = (function () {
     };
     return Register;
 }());
-Sspa.onPageShow(pagePath, function () {
+Sspa.onModShow(pagePath, function () {
     console.log('page-show');
 });

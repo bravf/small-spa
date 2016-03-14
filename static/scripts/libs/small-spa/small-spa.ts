@@ -9,8 +9,26 @@ interface ILinkNode extends HTMLLinkElement{
     attachEvent: Function
 }
 
-class Load{
-    static loadJs(url, callback){
+class Load {
+    static loadJs(url) {
+        let $defer = $.Deferred()
+
+        Load.__loadJs(url, () => {
+            $defer.resolve()
+        })
+
+        return $defer
+    }
+    static loadCss(url) {
+        let $defer = $.Deferred()
+
+        Load.__loadCss(url, () => {
+            $defer.resolve()
+        })
+
+        return $defer
+    }
+    static __loadJs(url, callback) {
         let node = <IScriptNode>document.createElement('script')
         node.setAttribute('src', url)
         document.getElementsByTagName('head')[0].appendChild(node)
@@ -19,7 +37,7 @@ class Load{
 
         if (isIE) {
             node.onreadystatechange = () => {
-                if (node.readyState && node.readyState == 'loading'){
+                if (node.readyState && node.readyState == 'loading') {
                     return
                 }
                 if (callback) {
@@ -37,13 +55,13 @@ class Load{
     }
 
     // 参考seajs
-    static loadCss(url, callback){
+    static __loadCss(url, callback) {
         let node = <ILinkNode>document.createElement('link')
         node.setAttribute('rel', 'stylesheet')
         node.setAttribute('href', url)
         document.getElementsByTagName('head')[0].appendChild(node)
 
-        if (node.attachEvent){
+        if (node.attachEvent) {
             node.attachEvent('onload', callback)
         }
         else {
@@ -90,53 +108,43 @@ class Load{
 }
 
 class Sspa{
-    static pageParams = []
-    static $event = $('<div/>')
+    static modParams = []
+    static __$event = $('<div/>')
 
-    static onHashChange(){
+
+    static __modId = 0
+    static __getModId(){
+        return `sspa-mod-id-${Sspa.__modId++}`
+    }
+    static __onHashChange(){
         let hash = location.hash.slice(2)
-        Sspa.handlePages(hash)
+        Sspa.__handleMods(hash)
     }
 
-    static triggerEvent(eventName, eventParams?) {
-        Sspa.$event.trigger(eventName, eventParams)
+    static __triggerEvent(eventName, eventParams?) {
+        Sspa.__$event.trigger(eventName, eventParams)
         return Sspa
     }
 
-    static onEvent(eventName, func){
-        Sspa.$event.on(eventName, func)
+    static __onEvent(eventName, func){
+        Sspa.__$event.on(eventName, func)
         return Sspa
     }
 
-    static onStartHash(func){
-        return Sspa.onEvent('start-hash', func)
-    }
-    static onEndHash(func){
-        return Sspa.onEvent('end-hash', func)
-    }
+    static __handleMods(hash){
+        Sspa.__triggerEvent('start-hash')
 
-    static onPageShow(pagePath, func){
-        return Sspa.onEvent('page-show', (e, path) => {
-            if (pagePath == path) {
-                func()
-            }
-        })
-    }
-
-    static handlePages(hash){
-        Sspa.triggerEvent('start-hash')
-
-        let currPages = []
-        let page = sspaConf.page
+        let currMods = []
+        let mod = sspaConf.mod
         let hashKeys = hash.split('/')
 
-        //找到hash每一项对应的page
+        //找到hash每一项对应的mod
         for (var i = 0, hashKey; i < hashKeys.length; i++){
             hashKey = hashKeys[i]
-            page = page[hashKey]
+            mod = mod[hashKey]
 
-            if (page){
-                currPages.push(page)
+            if (mod){
+                currMods.push(mod)
             }
             else {
                 break
@@ -144,110 +152,127 @@ class Sspa{
         }
 
         //剩余的当做页面的参数
-        Sspa.pageParams = hashKeys.slice(i)
+        Sspa.modParams = hashKeys.slice(i)
 
-        if (currPages.length == 0){
-            currPages.push(sspaConf.page.default)
+        if (currMods.length == 0){
+            currMods.push(sspaConf.mod.default)
         }
 
-        //加载未加载的page
+        //加载未加载的mod
         let defers = []
-        currPages.forEach((page, _) => {
-            if (!page.__loaded){
-                page.__loaded = true
+        currMods.forEach((mod, _) => {
+            if (!mod.__loaded){
+                mod.__loaded = true
 
-                // 如果没有配置sspa_path，则是个虚page，起到命名空间作用
-                if (page.sspa_path){
-                    defers.push(Sspa.loadPage(page))
+                // 如果没有配置sspa_path，则是个虚mod，起到命名空间作用
+                if (mod.sspa_tmpl) {
+                    defers.push(Sspa.loadMod(mod))
                 }
             }
         })
 
-        //当文件都加载成功，进行page显示
+        //当文件都加载成功，进行mod显示
         $.when.apply(null, defers).done(()=>{
-            currPages.forEach((page)=>{
-                let $pageContainer = $(page.sspa_container)
+            currMods.forEach((mod)=>{
+                let $modContainer = $(mod.sspa_container)
 
-                $pageContainer.append(page.__$pageWrapper)
-                page.__$container = $pageContainer
+                $modContainer.append(mod.__$modWrapper)
+                mod.__$container = $modContainer
 
-                Sspa.showPage(page)
+                Sspa.__showMod(mod)
             })
 
-            Sspa.triggerEvent('end-hash')
+            Sspa.__triggerEvent('end-hash')
         })
     }
 
-    static showPage(page) {
-        page.__$container.find('div[sspa-page-id]').hide()
-        page.__$container.find(`div[sspa-page-id="${page.sspa_path}"]`).show()
-        document.title = page.__title || 'small-spa'
-        Sspa.triggerEvent('page-show', [page.sspa_path])
+    // 加载js,css资源
+    static __loadResources(mod) {
+        let modId = mod.__modId = Sspa.__getModId()
+        let $html = mod.__$modWrapper = $('<div/>')
+        let $defers = []
+
+        mod.__title = $html.find('title').text()
+
+        $html.attr('sspa-mod-id', modId)
+            .html(mod.__htmlContent)
+
+        let $links = $html.find('link[href]')
+        $links.each((_, link) => {
+            let $link = $(link)
+            let href = $link.attr('href')
+
+            $defers.push(
+                Load.loadCss(href)
+            )
+        })
+
+        let $scripts = $html.find('script[src]')
+        $scripts.each((_, script) => {
+            let $script = $(script)
+            let src = $script.attr('src')
+
+            $defers.push(
+                Load.loadJs(src)
+            )
+        })
+
+        $links.remove()
+        $scripts.remove()
+
+        $html.appendTo($(mod.sspa_container))
+        return $.when.apply(null, $defers)
     }
 
-    static loadPage(page) {
-        let retDefer = $.Deferred()
-        let $pageWrapper = $('<div/>').attr('sspa-page-id', page.sspa_path).hide()
-        page.__$pageWrapper = $pageWrapper
+    static loadMod(mod) {console.log(mod)
+        if (mod.sspa_tmpl.slice(-5) === '.html'){
+            let $defer = $.Deferred()
+            let time = +new Date
 
-        let timeTag = +new Date
-        $.get(`${sspaConf.baseURL}${page.sspa_path}?_t=${timeTag}`).done((html) => {
-            $pageWrapper.append(html)
-
-            let defers = []
-
-            let $css = $pageWrapper.find('link')
-            if ($css.length){
-                defers.push(
-                    Sspa.loadCss($css.eq(0).attr('href'))
-                )
-            }
-
-            let $js = $pageWrapper.find('script')
-            if ($js.length){
-                defers.push(
-                    Sspa.loadJs($js.eq(0).attr('src'))
-                )
-            }
-
-            let $title = $pageWrapper.find('title')
-            if ($title.length){
-                page.__title = $title.html()
-            }
-
-            $css.remove()
-            $js.remove()
-
-            $.when.apply(null, defers).done(() => {
-                retDefer.resolve()
+            $.get(`${sspaConf.baseURL}${mod.sspa_tmpl}?_t=${time}`).done((html) => {
+                mod.__htmlContent = html
+                Sspa.__loadResources(mod).done(() => {
+                    $defer.resolve()
+                })
             })
-        })
-
-        return retDefer
+            return $defer
+        }
+        else {
+            mod.__htmlContent = mod.sspa_tmpl
+            return Sspa.__loadResources(mod)
+        }
     }
 
-    static loadCss(path) {
-        let defer = $.Deferred()
-        Load.loadCss(path, () => {
-            defer.resolve()
-        })
-        return defer
+    static __showMod(mod) {
+        mod.__$container.find('div[sspa-mod-id]').hide()
+        mod.__$container.find(`div[sspa-mod-id="${mod.__modId}"]`).show()
+        document.title = mod.__title || 'small-spa'
+        Sspa.__triggerEvent('mod-show', [mod.sspa_path])
     }
 
-    static loadJs(path) {
-        let defer = $.Deferred()
-        Load.loadJs(path, () => {
-            defer.resolve()
+    // events
+    static onStartHash(func) {
+        return Sspa.__onEvent('start-hash', func)
+    }
+
+    static onEndHash(func) {
+        return Sspa.__onEvent('end-hash', func)
+    }
+
+    static onModShow(modPath, func) {
+        return Sspa.__onEvent('mod-show', (e, path) => {
+            if (modPath == path) {
+                func()
+            }
         })
-        return defer
     }
 
     static init() {
         window.onhashchange = () => {
-            Sspa.onHashChange()
+            Sspa.__onHashChange()
         }
 
-        Sspa.onHashChange()
+        Sspa.__onHashChange()
     }
 }
 

@@ -3,7 +3,21 @@ var sspaConf = require('./small-spa-conf');
 var Load = (function () {
     function Load() {
     }
-    Load.loadJs = function (url, callback) {
+    Load.loadJs = function (url) {
+        var $defer = $.Deferred();
+        Load.__loadJs(url, function () {
+            $defer.resolve();
+        });
+        return $defer;
+    };
+    Load.loadCss = function (url) {
+        var $defer = $.Deferred();
+        Load.__loadCss(url, function () {
+            $defer.resolve();
+        });
+        return $defer;
+    };
+    Load.__loadJs = function (url, callback) {
         var node = document.createElement('script');
         node.setAttribute('src', url);
         document.getElementsByTagName('head')[0].appendChild(node);
@@ -27,7 +41,7 @@ var Load = (function () {
         }
     };
     // 参考seajs
-    Load.loadCss = function (url, callback) {
+    Load.__loadCss = function (url, callback) {
         var node = document.createElement('link');
         node.setAttribute('rel', 'stylesheet');
         node.setAttribute('href', url);
@@ -78,130 +92,136 @@ var Load = (function () {
 var Sspa = (function () {
     function Sspa() {
     }
-    Sspa.onHashChange = function () {
+    Sspa.__getModId = function () {
+        return "sspa-mod-id-" + Sspa.__modId++;
+    };
+    Sspa.__onHashChange = function () {
         var hash = location.hash.slice(2);
-        Sspa.handlePages(hash);
+        Sspa.__handleMods(hash);
     };
-    Sspa.triggerEvent = function (eventName, eventParams) {
-        Sspa.$event.trigger(eventName, eventParams);
+    Sspa.__triggerEvent = function (eventName, eventParams) {
+        Sspa.__$event.trigger(eventName, eventParams);
         return Sspa;
     };
-    Sspa.onEvent = function (eventName, func) {
-        Sspa.$event.on(eventName, func);
+    Sspa.__onEvent = function (eventName, func) {
+        Sspa.__$event.on(eventName, func);
         return Sspa;
     };
-    Sspa.onStartHash = function (func) {
-        return Sspa.onEvent('start-hash', func);
-    };
-    Sspa.onEndHash = function (func) {
-        return Sspa.onEvent('end-hash', func);
-    };
-    Sspa.onPageShow = function (pagePath, func) {
-        return Sspa.onEvent('page-show', function (e, path) {
-            if (pagePath == path) {
-                func();
-            }
-        });
-    };
-    Sspa.handlePages = function (hash) {
-        Sspa.triggerEvent('start-hash');
-        var currPages = [];
-        var page = sspaConf.page;
+    Sspa.__handleMods = function (hash) {
+        Sspa.__triggerEvent('start-hash');
+        var currMods = [];
+        var mod = sspaConf.mod;
         var hashKeys = hash.split('/');
-        //找到hash每一项对应的page
+        //找到hash每一项对应的mod
         for (var i = 0, hashKey; i < hashKeys.length; i++) {
             hashKey = hashKeys[i];
-            page = page[hashKey];
-            if (page) {
-                currPages.push(page);
+            mod = mod[hashKey];
+            if (mod) {
+                currMods.push(mod);
             }
             else {
                 break;
             }
         }
         //剩余的当做页面的参数
-        Sspa.pageParams = hashKeys.slice(i);
-        if (currPages.length == 0) {
-            currPages.push(sspaConf.page.default);
+        Sspa.modParams = hashKeys.slice(i);
+        if (currMods.length == 0) {
+            currMods.push(sspaConf.mod.default);
         }
-        //加载未加载的page
+        //加载未加载的mod
         var defers = [];
-        currPages.forEach(function (page, _) {
-            if (!page.__loaded) {
-                page.__loaded = true;
-                // 如果没有配置sspa_path，则是个虚page，起到命名空间作用
-                if (page.sspa_path) {
-                    defers.push(Sspa.loadPage(page));
+        currMods.forEach(function (mod, _) {
+            if (!mod.__loaded) {
+                mod.__loaded = true;
+                // 如果没有配置sspa_path，则是个虚mod，起到命名空间作用
+                if (mod.sspa_tmpl) {
+                    defers.push(Sspa.loadMod(mod));
                 }
             }
         });
-        //当文件都加载成功，进行page显示
+        //当文件都加载成功，进行mod显示
         $.when.apply(null, defers).done(function () {
-            currPages.forEach(function (page) {
-                var $pageContainer = $(page.sspa_container);
-                $pageContainer.append(page.__$pageWrapper);
-                page.__$container = $pageContainer;
-                Sspa.showPage(page);
+            currMods.forEach(function (mod) {
+                var $modContainer = $(mod.sspa_container);
+                $modContainer.append(mod.__$modWrapper);
+                mod.__$container = $modContainer;
+                Sspa.__showMod(mod);
             });
-            Sspa.triggerEvent('end-hash');
+            Sspa.__triggerEvent('end-hash');
         });
     };
-    Sspa.showPage = function (page) {
-        page.__$container.find('div[sspa-page-id]').hide();
-        page.__$container.find("div[sspa-page-id=\"" + page.sspa_path + "\"]").show();
-        document.title = page.__title || 'small-spa';
-        Sspa.triggerEvent('page-show', [page.sspa_path]);
+    // 加载js,css资源
+    Sspa.__loadResources = function (mod) {
+        var modId = mod.__modId = Sspa.__getModId();
+        var $html = mod.__$modWrapper = $('<div/>');
+        var $defers = [];
+        mod.__title = $html.find('title').text();
+        $html.attr('sspa-mod-id', modId)
+            .html(mod.__htmlContent);
+        var $links = $html.find('link[href]');
+        $links.each(function (_, link) {
+            var $link = $(link);
+            var href = $link.attr('href');
+            $defers.push(Load.loadCss(href));
+        });
+        var $scripts = $html.find('script[src]');
+        $scripts.each(function (_, script) {
+            var $script = $(script);
+            var src = $script.attr('src');
+            $defers.push(Load.loadJs(src));
+        });
+        $links.remove();
+        $scripts.remove();
+        $html.appendTo($(mod.sspa_container));
+        return $.when.apply(null, $defers);
     };
-    Sspa.loadPage = function (page) {
-        var retDefer = $.Deferred();
-        var $pageWrapper = $('<div/>').attr('sspa-page-id', page.sspa_path).hide();
-        page.__$pageWrapper = $pageWrapper;
-        var timeTag = +new Date;
-        $.get("" + sspaConf.baseURL + page.sspa_path + "?_t=" + timeTag).done(function (html) {
-            $pageWrapper.append(html);
-            var defers = [];
-            var $css = $pageWrapper.find('link');
-            if ($css.length) {
-                defers.push(Sspa.loadCss($css.eq(0).attr('href')));
-            }
-            var $js = $pageWrapper.find('script');
-            if ($js.length) {
-                defers.push(Sspa.loadJs($js.eq(0).attr('src')));
-            }
-            var $title = $pageWrapper.find('title');
-            if ($title.length) {
-                page.__title = $title.html();
-            }
-            $css.remove();
-            $js.remove();
-            $.when.apply(null, defers).done(function () {
-                retDefer.resolve();
+    Sspa.loadMod = function (mod) {
+        console.log(mod);
+        if (mod.sspa_tmpl.slice(-5) === '.html') {
+            var $defer_1 = $.Deferred();
+            var time = +new Date;
+            $.get("" + sspaConf.baseURL + mod.sspa_tmpl + "?_t=" + time).done(function (html) {
+                mod.__htmlContent = html;
+                Sspa.__loadResources(mod).done(function () {
+                    $defer_1.resolve();
+                });
             });
-        });
-        return retDefer;
+            return $defer_1;
+        }
+        else {
+            mod.__htmlContent = mod.sspa_tmpl;
+            return Sspa.__loadResources(mod);
+        }
     };
-    Sspa.loadCss = function (path) {
-        var defer = $.Deferred();
-        Load.loadCss(path, function () {
-            defer.resolve();
-        });
-        return defer;
+    Sspa.__showMod = function (mod) {
+        mod.__$container.find('div[sspa-mod-id]').hide();
+        mod.__$container.find("div[sspa-mod-id=\"" + mod.__modId + "\"]").show();
+        document.title = mod.__title || 'small-spa';
+        Sspa.__triggerEvent('mod-show', [mod.sspa_path]);
     };
-    Sspa.loadJs = function (path) {
-        var defer = $.Deferred();
-        Load.loadJs(path, function () {
-            defer.resolve();
+    // events
+    Sspa.onStartHash = function (func) {
+        return Sspa.__onEvent('start-hash', func);
+    };
+    Sspa.onEndHash = function (func) {
+        return Sspa.__onEvent('end-hash', func);
+    };
+    Sspa.onModShow = function (modPath, func) {
+        return Sspa.__onEvent('mod-show', function (e, path) {
+            if (modPath == path) {
+                func();
+            }
         });
-        return defer;
     };
     Sspa.init = function () {
         window.onhashchange = function () {
-            Sspa.onHashChange();
+            Sspa.__onHashChange();
         };
-        Sspa.onHashChange();
+        Sspa.__onHashChange();
     };
-    Sspa.pageParams = [];
-    Sspa.$event = $('<div/>');
+    Sspa.modParams = [];
+    Sspa.__$event = $('<div/>');
+    Sspa.__modId = 0;
     return Sspa;
 }());
 this.Sspa = Sspa;

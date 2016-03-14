@@ -43,7 +43,8 @@ def exeCmd(cmd):
 
 def releaseDev():
     print 'release to dev'
-    exeCmd('jello release -wcomD')
+    #exeCmd('jello release -wcomD')
+    exeCmd('jello release -w')
 
 def releaseQa():
     print 'release to 192.168.50.107 start...'

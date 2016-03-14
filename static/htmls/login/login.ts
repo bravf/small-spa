@@ -13,6 +13,6 @@ class Login {
 }
 
 
-Sspa.onPageShow(pagePath, () => {
+Sspa.onModShow(pagePath, () => {
     console.log('page-show')
 })

@@ -11,11 +11,6 @@ var Login = (function () {
     };
     return Login;
 }());
-console.log(Sspa.pageParams);
-Sspa.onPageShow(pagePath, function () {
+Sspa.onModShow(pagePath, function () {
     console.log('page-show');
 });
-// Sspa.onEndPage(pagePath, (params) => {
-//     console.log(params)
-//     console.log('page-end')
-// })
