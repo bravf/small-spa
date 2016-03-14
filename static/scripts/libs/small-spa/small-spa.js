@@ -145,7 +145,7 @@ var Sspa = (function () {
                 var $modContainer = $(mod.sspa_container);
                 $modContainer.append(mod.__$modWrapper);
                 mod.__$container = $modContainer;
-                Sspa.__showMod(mod);
+                Sspa.showMod(mod);
             });
             Sspa.__triggerEvent('end-hash');
         });
@@ -192,7 +192,7 @@ var Sspa = (function () {
             return Sspa.__loadResources(mod);
         }
     };
-    Sspa.__showMod = function (mod) {
+    Sspa.showMod = function (mod) {
         mod.__$container.find('div[sspa-mod-id]').hide();
         mod.__$container.find("div[sspa-mod-id=\"" + mod.__modId + "\"]").show();
         document.title = mod.__title || 'small-spa';

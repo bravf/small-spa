@@ -179,7 +179,7 @@ class Sspa{
                 $modContainer.append(mod.__$modWrapper)
                 mod.__$container = $modContainer
 
-                Sspa.__showMod(mod)
+                Sspa.showMod(mod)
             })
 
             Sspa.__triggerEvent('end-hash')
@@ -243,7 +243,7 @@ class Sspa{
         }
     }
 
-    static __showMod(mod) {
+    static showMod(mod) {
         mod.__$container.find('div[sspa-mod-id]').hide()
         mod.__$container.find(`div[sspa-mod-id="${mod.__modId}"]`).show()
         document.title = mod.__title || 'small-spa'
