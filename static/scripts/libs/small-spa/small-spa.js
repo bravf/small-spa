@@ -176,7 +176,6 @@ var Sspa = (function () {
         return $.when.apply(null, $defers);
     };
     Sspa.loadMod = function (mod) {
-        console.log(mod);
         if (mod.sspa_tmpl.slice(-5) === '.html') {
             var $defer_1 = $.Deferred();
             var time = +new Date;

@@ -224,7 +224,7 @@ class Sspa{
         return $.when.apply(null, $defers)
     }
 
-    static loadMod(mod) {console.log(mod)
+    static loadMod(mod) {
         if (mod.sspa_tmpl.slice(-5) === '.html'){
             let $defer = $.Deferred()
             let time = +new Date
