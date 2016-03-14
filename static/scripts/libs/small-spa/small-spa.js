@@ -142,9 +142,8 @@ var Sspa = (function () {
         //当文件都加载成功，进行mod显示
         $.when.apply(null, defers).done(function () {
             currMods.forEach(function (mod) {
-                var $modContainer = $(mod.sspa_container);
+                var $modContainer = mod.__$container = $(mod.sspa_container);
                 $modContainer.append(mod.__$modWrapper);
-                mod.__$container = $modContainer;
                 Sspa.showMod(mod);
             });
             Sspa.__triggerEvent('end-hash');

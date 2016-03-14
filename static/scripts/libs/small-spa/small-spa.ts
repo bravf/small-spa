@@ -174,11 +174,8 @@ class Sspa{
         //当文件都加载成功，进行mod显示
         $.when.apply(null, defers).done(()=>{
             currMods.forEach((mod)=>{
-                let $modContainer = $(mod.sspa_container)
-
+                let $modContainer = mod.__$container = $(mod.sspa_container)
                 $modContainer.append(mod.__$modWrapper)
-                mod.__$container = $modContainer
-
                 Sspa.showMod(mod)
             })
 
