@@ -96,7 +96,8 @@ var Sspa = (function () {
         return "sspa-mod-id-" + Sspa.__modId++;
     };
     Sspa.__onHashChange = function () {
-        var hash = location.hash.slice(2);
+        var hash = Sspa.__getRealHash().slice(1);
+        console.log(hash);
         Sspa.__handleMods(hash);
     };
     Sspa.__triggerEvent = function (eventName, eventParams) {
@@ -125,9 +126,6 @@ var Sspa = (function () {
         }
         //剩余的当做页面的参数
         Sspa.modParams = hashKeys.slice(i);
-        if (currMods.length == 0) {
-            currMods.push(sspaConf.mod.default);
-        }
         //加载未加载的mod
         var defers = [];
         currMods.forEach(function (mod, _) {
@@ -152,7 +150,7 @@ var Sspa = (function () {
     // 加载js,css资源
     Sspa.__loadResources = function (mod) {
         var modId = mod.__modId = Sspa.__getModId();
-        var $html = mod.__$modWrapper = $('<div/>');
+        var $html = mod.__$modWrapper = $('<div/>').hide();
         var $defers = [];
         mod.__title = $html.find('title').text();
         $html.attr('sspa-mod-id', modId)
@@ -195,7 +193,7 @@ var Sspa = (function () {
         mod.__$container.find('div[sspa-mod-id]').hide();
         mod.__$container.find("div[sspa-mod-id=\"" + mod.__modId + "\"]").show();
         document.title = mod.__title || 'small-spa';
-        Sspa.__triggerEvent('mod-show', [mod.sspa_path]);
+        Sspa.__triggerEvent('mod-show', [mod.sspa_tmpl]);
     };
     // events
     Sspa.onStartHash = function (func) {
@@ -211,6 +209,32 @@ var Sspa = (function () {
             }
         });
     };
+    Sspa.urlRewrite = function (a, b) {
+        Sspa.__rewriteTables.push({
+            a: a, b: b
+        });
+        return Sspa;
+    };
+    Sspa.__getRealHash = function () {
+        var hash = location.hash.slice(1);
+        var realHash = hash;
+        $.each(Sspa.__rewriteTables, function (_, ab) {
+            var a = ab.a, b = ab.b;
+            if (typeof a === 'string') {
+                if (hash == a) {
+                    realHash = b;
+                    return false;
+                }
+            }
+            else {
+                if (a.test(hash)) {
+                    realHash = b;
+                    return false;
+                }
+            }
+        });
+        return realHash;
+    };
     Sspa.init = function () {
         window.onhashchange = function () {
             Sspa.__onHashChange();
@@ -220,6 +244,8 @@ var Sspa = (function () {
     Sspa.modParams = [];
     Sspa.__$event = $('<div/>');
     Sspa.__modId = 0;
+    // url rewrite处理
+    Sspa.__rewriteTables = [];
     return Sspa;
 }());
 this.Sspa = Sspa;

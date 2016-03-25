@@ -1,5 +1,6 @@
 "use strict";
-exports.baseURL = '//s1.mljr.com/crm-pc';
+//export let baseURL = '//s1.mljr.com/crm-pc'
+exports.baseURL = '//127.0.0.1/crm-pc';
 // let mod2 = {
 //     hello: {
 //         sspa_tmpl: '/static/htmls/hello/hello.html',
@@ -13,7 +14,6 @@ exports.baseURL = '//s1.mljr.com/crm-pc';
 //     }
 // }
 exports.mod = {
-    default: null,
     hello: {
         sspa_tmpl: '/static/htmls/hello/hello.html',
         sspa_container: 'body'
@@ -41,4 +41,3 @@ exports.mod = {
         }
     }
 };
-exports.mod.default = exports.mod.hello;

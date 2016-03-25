@@ -1,4 +1,5 @@
-export let baseURL = '//s1.mljr.com/crm-pc'
+//export let baseURL = '//s1.mljr.com/crm-pc'
+export let baseURL = '//127.0.0.1/crm-pc'
 
 // let mod2 = {
 //     hello: {
@@ -15,7 +16,6 @@ export let baseURL = '//s1.mljr.com/crm-pc'
 // }
 
 export let mod = {
-    default: null,
     hello: {
         sspa_tmpl: '/static/htmls/hello/hello.html',
         sspa_container: 'body'
@@ -45,5 +45,3 @@ export let mod = {
         }
     }
 }
-
-mod.default = mod.hello

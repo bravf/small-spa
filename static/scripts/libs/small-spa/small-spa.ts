@@ -117,7 +117,8 @@ class Sspa{
         return `sspa-mod-id-${Sspa.__modId++}`
     }
     static __onHashChange(){
-        let hash = location.hash.slice(2)
+        let hash = Sspa.__getRealHash().slice(1)
+        console.log(hash)
         Sspa.__handleMods(hash)
     }
 
@@ -154,10 +155,6 @@ class Sspa{
         //剩余的当做页面的参数
         Sspa.modParams = hashKeys.slice(i)
 
-        if (currMods.length == 0){
-            currMods.push(sspaConf.mod.default)
-        }
-
         //加载未加载的mod
         let defers = []
         currMods.forEach((mod, _) => {
@@ -186,7 +183,7 @@ class Sspa{
     // 加载js,css资源
     static __loadResources(mod) {
         let modId = mod.__modId = Sspa.__getModId()
-        let $html = mod.__$modWrapper = $('<div/>')
+        let $html = mod.__$modWrapper = $('<div/>').hide()
         let $defers = []
 
         mod.__title = $html.find('title').text()
@@ -244,7 +241,7 @@ class Sspa{
         mod.__$container.find('div[sspa-mod-id]').hide()
         mod.__$container.find(`div[sspa-mod-id="${mod.__modId}"]`).show()
         document.title = mod.__title || 'small-spa'
-        Sspa.__triggerEvent('mod-show', [mod.sspa_path])
+        Sspa.__triggerEvent('mod-show', [mod.sspa_tmpl])
     }
 
     // events
@@ -262,6 +259,40 @@ class Sspa{
                 func()
             }
         })
+    }
+
+    // url rewrite处理
+    static __rewriteTables = []
+
+    static urlRewrite(a, b){
+        Sspa.__rewriteTables.push({
+            a, b
+        })
+        return Sspa
+    }
+
+    static __getRealHash(){
+        let hash = location.hash.slice(1)
+        var realHash = hash
+
+        $.each(Sspa.__rewriteTables, (_, ab)=>{
+            let {a ,b} = ab
+
+            if (typeof a === 'string'){
+                if (hash == a){
+                    realHash = b
+                    return false
+                }
+            }
+            else {
+                if (a.test(hash)){
+                    realHash = b
+                    return false
+                }
+            }
+        })
+
+        return realHash
     }
 
     static init() {

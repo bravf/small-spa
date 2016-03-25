@@ -23,11 +23,13 @@ var $loading = $('<div/>').appendTo($('body'))
         'font-size':'30px'
     })
 
-Sspa.onStartHash(function (){
+Sspa
+.onStartHash(function (){
     $loading.show()
 })
 .onEndHash(function (){
     $loading.hide()
 })
+.urlRewrite('register', '/frame/register')
 .init()
 </script>
