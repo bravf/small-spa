@@ -118,7 +118,6 @@ class Sspa{
     }
     static __onHashChange(){
         let hash = Sspa.__getRealHash().slice(1)
-        console.log(hash)
         Sspa.__handleMods(hash)
     }
 
