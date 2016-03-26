@@ -1,3 +1,10 @@
+SSpa
+    .onModShow('register', function () {
+    console.log('register show');
+})
+    .onModHide('register', function () {
+    console.log('register hide');
+});
 // let pagePath = '/static/htmls/register/register.html'
 // class Register {
 //     static sayHello() {

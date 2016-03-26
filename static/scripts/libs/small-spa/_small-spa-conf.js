@@ -28,14 +28,14 @@ exports.PageMods = {
 };
 exports.Pages = [
     {
-        url: /^\/login\/?$/,
+        url: 'login',
         mods: [
             'frame',
             'login'
         ]
     },
     {
-        url: /^\/register\/?$/,
+        url: 'register',
         mods: [
             'frame',
             'register'

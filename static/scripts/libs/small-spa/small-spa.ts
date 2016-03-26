@@ -39,7 +39,29 @@ class PageMod{
         if (!this.appended) {
             this.$html.appendTo($(this.container))
         }
-        this.$html.parent().find('div[sspa-mod-id]').hide()
+
+        this.$html.parent().find('div[sspa-mod-id]').each((_, modDiv)=>{
+            let $mod = $(modDiv)
+            let modName = $mod.attr('sspa-mod-id')
+            let isShow = $mod.css('display') != 'none'
+
+            //如果是当前要显示的mod
+            if (modName == this.modName){
+                $mod.show()
+                //如果之前是隐藏状态，则触发mod的show事件
+                if (!isShow){
+                    SSpa.$event.trigger(`SSpa_mod_${modName}.show`)
+                }
+            }
+            else {
+                $mod.hide()
+                //如果之前是显示状态，则触发mod的hide事件
+                if (isShow){
+                    SSpa.$event.trigger(`SSpa_mod_${modName}.hide`)
+                }
+            }
+        })
+
         this.$html.show()
     }
     public load(){
@@ -95,14 +117,9 @@ for (let modName in PageMods){
 
 class Page{
     // statics
-    static pages = []
+    static pages = {}
     static getPage(url){
-        for (let i = 0; i < Page.pages.length; i++){
-            let page = Page.pages[i]
-            if (page.url.test(url)){
-                return page
-            }
-        }
+        return Page.pages[url]
     }
     static show(url) {
         let page = Page.getPage(url)
@@ -127,12 +144,41 @@ class Page{
 
 //init pages from conf
 Pages.forEach((page)=>{
-    Page.pages.push(
-        new Page(page.url, page.mods)
-    )
+    Page.pages[page.url] = new Page(page.url, page.mods)
 })
 
-Page.show(location.hash.slice(1))
+class SSpa{
+    static $event = $('<div/>')
+
+    static onModShow(modName, func){
+        this.$event.on(`SSpa_mod_${modName}.show`, func)
+        return this
+    }
+
+    static onModHide(modName, func){
+        this.$event.on(`SSpa_mod_${modName}.hide`, func)
+        return this
+    }
+
+    static getHash(){
+        let hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/)
+        let url = hashInfo[1] || ''
+        let params = hashInfo[2] || ''
+
+        if (url[0] == '/'){
+            url = url.slice(1)
+        }
+        if (url.slice(-1) == '/'){
+            url = url.slice(0, -1)
+        }
+
+        return {url, params}
+    }
+}
+
+this.SSpa = SSpa
+
+Page.show(SSpa.getHash().url)
 window.onhashchange = ()=>{
-    Page.show(location.hash.slice(1))
+    Page.show(SSpa.getHash().url)
 }

@@ -1,4 +1,12 @@
-declare var $, Sspa
+declare var $, SSpa
+
+SSpa
+.onModShow('register', ()=>{
+    console.log('register show')
+})
+.onModHide('register', ()=>{
+    console.log('register hide')
+})
 
 // let pagePath = '/static/htmls/register/register.html'
 

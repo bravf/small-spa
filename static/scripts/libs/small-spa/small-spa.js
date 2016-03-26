@@ -30,10 +30,30 @@ var PageMod = (function () {
         return $defer;
     };
     PageMod.prototype.show = function () {
+        var _this = this;
         if (!this.appended) {
             this.$html.appendTo($(this.container));
         }
-        this.$html.parent().find('div[sspa-mod-id]').hide();
+        this.$html.parent().find('div[sspa-mod-id]').each(function (_, modDiv) {
+            var $mod = $(modDiv);
+            var modName = $mod.attr('sspa-mod-id');
+            var isShow = $mod.css('display') != 'none';
+            //如果是当前要显示的mod
+            if (modName == _this.modName) {
+                $mod.show();
+                //如果之前是隐藏状态，则触发mod的show事件
+                if (!isShow) {
+                    SSpa.$event.trigger("SSpa_mod_" + modName + ".show");
+                }
+            }
+            else {
+                $mod.hide();
+                //如果之前是显示状态，则触发mod的hide事件
+                if (isShow) {
+                    SSpa.$event.trigger("SSpa_mod_" + modName + ".hide");
+                }
+            }
+        });
         this.$html.show();
     };
     PageMod.prototype.load = function () {
@@ -83,12 +103,7 @@ var Page = (function () {
         this.modules = modules;
     }
     Page.getPage = function (url) {
-        for (var i = 0; i < Page.pages.length; i++) {
-            var page = Page.pages[i];
-            if (page.url.test(url)) {
-                return page;
-            }
-        }
+        return Page.pages[url];
     };
     Page.show = function (url) {
         var page = Page.getPage(url);
@@ -103,14 +118,41 @@ var Page = (function () {
         });
     };
     // statics
-    Page.pages = [];
+    Page.pages = {};
     return Page;
 }());
 //init pages from conf
 _small_spa_conf_1.Pages.forEach(function (page) {
-    Page.pages.push(new Page(page.url, page.mods));
+    Page.pages[page.url] = new Page(page.url, page.mods);
 });
-Page.show(location.hash.slice(1));
+var SSpa = (function () {
+    function SSpa() {
+    }
+    SSpa.onModShow = function (modName, func) {
+        this.$event.on("SSpa_mod_" + modName + ".show", func);
+        return this;
+    };
+    SSpa.onModHide = function (modName, func) {
+        this.$event.on("SSpa_mod_" + modName + ".hide", func);
+        return this;
+    };
+    SSpa.getHash = function () {
+        var hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/);
+        var url = hashInfo[1] || '';
+        var params = hashInfo[2] || '';
+        if (url[0] == '/') {
+            url = url.slice(1);
+        }
+        if (url.slice(-1) == '/') {
+            url = url.slice(0, -1);
+        }
+        return { url: url, params: params };
+    };
+    SSpa.$event = $('<div/>');
+    return SSpa;
+}());
+this.SSpa = SSpa;
+Page.show(SSpa.getHash().url);
 window.onhashchange = function () {
-    Page.show(location.hash.slice(1));
+    Page.show(SSpa.getHash().url);
 };
