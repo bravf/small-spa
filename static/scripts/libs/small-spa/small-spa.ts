@@ -1,111 +1,100 @@
 declare let $
-import sspaConf = require('./small-spa-conf')
 
-interface IScriptNode extends HTMLScriptElement{
-    onreadystatechange: Function,
-    readyState: string
-}
-interface ILinkNode extends HTMLLinkElement{
-    attachEvent: Function
-}
+import {BaseURL, PageMods, Pages} from "./_small-spa-conf"
+import {Loader} from "./_loader"
 
-class Load {
-    static loadJs(url) {
-        let $defer = $.Deferred()
 
-        Load.__loadJs(url, () => {
-            $defer.resolve()
-        })
+class PageMod{
+    static mods = {}
+    static getMod(modName){
+        var $defer = $.Deferred()
+        var mod = PageMod.mods[name]
+
+        if (mod.loaded){
+            $defer.resolve(mod)
+        }
+        else {
+            mod.load().done(()=>{
+                mod.loaded = true
+                $defer.resolve(mod)
+            })
+        }
 
         return $defer
     }
-    static loadCss(url) {
+
+    public title = ''
+    public $html = ''
+    public loaded = false
+
+    constructor(public modPath, public container){}
+    load(){
         let $defer = $.Deferred()
+        let time = +new Date
 
-        Load.__loadCss(url, () => {
-            $defer.resolve()
+        $.get(`${BaseURL}${this.modPath}?_t=${time}`).done((html) => {
+            this.__loadResources(html).done(() => {
+                $defer.resolve()
+            })
         })
-
         return $defer
     }
-    static __loadJs(url, callback) {
-        let node = <IScriptNode>document.createElement('script')
-        node.setAttribute('src', url)
-        document.getElementsByTagName('head')[0].appendChild(node)
+    __loadResources(html){
+        let $html = this.$html = $('<div/>').html(html).attr('sspa-mod-id', this.modPath)
+        let $defers = []
 
-        let isIE = navigator.userAgent.indexOf('MSIE') == -1 ? false : true
+        this.title = $html.find('title').text()
 
-        if (isIE) {
-            node.onreadystatechange = () => {
-                if (node.readyState && node.readyState == 'loading') {
-                    return
-                }
-                if (callback) {
-                    callback()
-                }
-            }
-        }
-        else {
-            node.onload = function() {
-                if (callback) {
-                    callback()
-                }
-            }
-        }
-    }
+        let $links = $html.find('link[href]')
+        $links.each((_, link) => {
+            let $link = $(link)
+            let href = $link.attr('href')
 
-    // 参考seajs
-    static __loadCss(url, callback) {
-        let node = <ILinkNode>document.createElement('link')
-        node.setAttribute('rel', 'stylesheet')
-        node.setAttribute('href', url)
-        document.getElementsByTagName('head')[0].appendChild(node)
+            $defers.push(
+                Loader.loadCss(href)
+            )
+        })
 
-        if (node.attachEvent) {
-            node.attachEvent('onload', callback)
-        }
-        else {
-            setTimeout(() => {
-                poll(node, callback)
-            }, 0)
-        }
+        let $scripts = $html.find('script[src]')
+        $scripts.each((_, script) => {
+            let $script = $(script)
+            let src = $script.attr('src')
 
-        function poll(_elem, callback) {
-            let isLoaded = false
-            let sheet = _elem['sheet']
-            let isOldWebKit = parseInt(navigator.userAgent.replace(/.*AppleWebKit\/(\d+)\..*/, '$1')) < 536
+            $defers.push(
+                Loader.loadJs(src)
+            )
+        })
 
-            if (isOldWebKit) { //webkit 版本小于 536
-                if (sheet) {
-                    isLoaded = true
-                }
-            }
-            else if (sheet) {
-                try {
-                    if (sheet.cssRules) {
-                        isLoaded = true
-                    }
-                }
-                catch (ex) {
-                    if (ex.code === 'NS_ERROR_DOM_SECURITY_ERR') {
-                        isLoaded = true
-                    }
-                }
-            }
+        $links.remove()
+        $scripts.remove()
 
-            if (isLoaded) {
-                setTimeout(() => {
-                    callback()
-                }, 1)
-            }
-            else {
-                setTimeout(() => {
-                    poll(_elem, callback)
-                }, 1)
-            }
-        }
+        return $.when.apply(null, $defers)
     }
 }
+
+// init mods from conf
+for (let modName in PageMods){
+    let modObj = PageMods[modName]
+
+    PageMod.mods[modName] = new PageMod(modObj.modPath, modObj.container)
+}
+
+class Page{
+    static pages = []
+
+
+    constructor(public url, public modules){}
+    __bindEvents(){
+
+    }
+}
+
+//init pages from conf
+Pages.forEach((page)=>{
+    Page.pages.push(
+        new Page(page.url, page.mods)
+    )
+})
 
 class Sspa{
     static modParams = []
