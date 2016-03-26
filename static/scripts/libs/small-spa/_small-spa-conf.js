@@ -1,11 +1,10 @@
+"use strict";
 //export let baseURL = '//s1.mljr.com/crm-pc'
-export let BaseURL = '//127.0.0.1/crm-pc'
-
+exports.BaseURL = '//127.0.0.1/crm-pc';
 // let mod2 = {
 //     hello: {
 //         sspa_tmpl: '/static/htmls/hello/hello.html',
 //         sspa_container: 'body',
-
 //         __modId: 'mod-id-0',
 //         __loaded: false,
 //         __htmlContent: '',
@@ -13,8 +12,7 @@ export let BaseURL = '//127.0.0.1/crm-pc'
 //         __$container: $(sspa_container),
 //         __title: ''
 //     }
-
-export let PageMods = {
+exports.PageMods = {
     frame: {
         modPath: '/static/htmls/frame/frame.html',
         container: 'body'
@@ -27,9 +25,8 @@ export let PageMods = {
         modPath: '/static/htmls/register/register.html',
         container: 'body .right-container'
     }
-}
-
-export let Pages = [
+};
+exports.Pages = [
     {
         url: /^\/login\/?$/,
         mods: [
@@ -44,4 +41,4 @@ export let Pages = [
             'register'
         ]
     }
-]
+];

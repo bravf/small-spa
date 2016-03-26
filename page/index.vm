@@ -13,23 +13,23 @@
 </html>
 
 <script>
-var $loading = $('<div/>').appendTo($('body'))
-    .text('loading...')
-    .css({
-        'position':'fixed',
-        'width':'100%',
-        'text-align':'center',
-        'top':'300px',
-        'font-size':'30px'
-    })
+// var $loading = $('<div/>').appendTo($('body'))
+//     .text('loading...')
+//     .css({
+//         'position':'fixed',
+//         'width':'100%',
+//         'text-align':'center',
+//         'top':'300px',
+//         'font-size':'30px'
+//     })
 
-Sspa
-.onStartHash(function (){
-    $loading.show()
-})
-.onEndHash(function (){
-    $loading.hide()
-})
-.urlRewrite('register', '/frame/register')
-.init()
+// Sspa
+// .onStartHash(function (){
+//     $loading.show()
+// })
+// .onEndHash(function (){
+//     $loading.hide()
+// })
+// .urlRewrite('register', '/frame/register')
+// .init()
 </script>

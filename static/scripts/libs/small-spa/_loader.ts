@@ -1,3 +1,5 @@
+declare let $
+
 interface IScriptNode extends HTMLScriptElement {
     onreadystatechange: Function,
     readyState: string
