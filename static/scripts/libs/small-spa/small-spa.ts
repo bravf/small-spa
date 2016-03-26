@@ -76,7 +76,7 @@ class PageMod{
         return $defer
     }
     __loadResources(html){
-        let $html = this.$html = $('<div/>').html(html).attr('sspa-mod-id', this.modName)
+        let $html = this.$html = $('<div/>').html(html).attr('sspa-mod-id', this.modName).hide()
         let $defers = []
 
         this.title = $html.find('title').text()

@@ -68,7 +68,7 @@ var PageMod = (function () {
         return $defer;
     };
     PageMod.prototype.__loadResources = function (html) {
-        var $html = this.$html = $('<div/>').html(html).attr('sspa-mod-id', this.modName);
+        var $html = this.$html = $('<div/>').html(html).attr('sspa-mod-id', this.modName).hide();
         var $defers = [];
         this.title = $html.find('title').text();
         var $links = $html.find('link[href]');
