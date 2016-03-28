@@ -32,3 +32,14 @@ export let Pages = [
         ]
     }
 ]
+
+export let UrlRewrite = [
+    {
+        _from: '',
+        _to: 'login'
+    },
+    {
+        _from: /^user\/(\d+)$/,
+        _to: 'register?id=$1'
+    }
+]

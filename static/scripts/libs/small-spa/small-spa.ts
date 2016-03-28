@@ -1,6 +1,6 @@
 declare let $
 
-import {BaseURL, PageMods, Pages} from "./_small-spa-conf"
+import {BaseURL, PageMods, Pages, UrlRewrite} from "./_small-spa-conf"
 import {Loader} from "./_loader"
 
 class PageMod{
@@ -165,26 +165,64 @@ class SSpa{
         return this
     }
 
-    static getHash(){
-        let hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/) || []
-
-        let url = hashInfo[1] || ''
-        let paramStr = hashInfo[2]
-
-        if (url[0] == '/'){
-            url = url.slice(1)
-        }
-        if (url.slice(-1) == '/'){
-            url = url.slice(0, -1)
-        }
-
+    static getQuerysring(qstr){
         let params = {}
-        if (paramStr) {
-            paramStr.split('&').forEach((a) => {
+
+        if (qstr) {
+            qstr.split('&').forEach((a) => {
                 let xy = a.split('=')
                 params[xy[0]] = xy[1]
             })
         }
+
+        return params
+    }
+
+    static getHash(){
+        let hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/) || []
+
+        var url = hashInfo[1] || ''
+        var qstr = hashInfo[2] || ''
+
+        if (url[0] == '/') {
+            url = url.slice(1)
+        }
+        if (url.slice(-1) == '/') {
+            url = url.slice(0, -1)
+        }
+
+        // 检查是否有url rewrite
+        UrlRewrite.forEach((rule)=>{
+            let {_from, _to} = rule
+            let _fromType = Object.prototype.toString.call(_from).slice(8, -1)
+
+            if (_fromType === 'String'){
+                if (_from === url){
+                    url = _to
+                }
+            }
+            else if (_fromType === 'RegExp'){
+                let matchObj = url.match(_from)
+                if (matchObj){
+                    let toUrl = _to.replace(/\$(\d+)/g, function (a, b){
+                        return matchObj[b]
+                    })
+
+                    let i = toUrl.indexOf('?')
+                    if (i != -1){
+                        url = toUrl.slice(0, i)
+
+                        if (qstr){
+                            qstr += '&'
+                        }
+                        qstr += toUrl.slice(i+1)
+                    }
+                }
+            }
+
+        })
+
+        let params = this.getQuerysring(qstr)
 
         return {url, params}
     }

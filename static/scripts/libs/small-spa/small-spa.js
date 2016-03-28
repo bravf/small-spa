@@ -142,23 +142,53 @@ var SSpa = (function () {
         this.$event.on("SSpa_mod_" + modName + ".hide", func);
         return this;
     };
+    SSpa.getQuerysring = function (qstr) {
+        var params = {};
+        if (qstr) {
+            qstr.split('&').forEach(function (a) {
+                var xy = a.split('=');
+                params[xy[0]] = xy[1];
+            });
+        }
+        return params;
+    };
     SSpa.getHash = function () {
         var hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/) || [];
         var url = hashInfo[1] || '';
-        var paramStr = hashInfo[2];
+        var qstr = hashInfo[2] || '';
         if (url[0] == '/') {
             url = url.slice(1);
         }
         if (url.slice(-1) == '/') {
             url = url.slice(0, -1);
         }
-        var params = {};
-        if (paramStr) {
-            paramStr.split('&').forEach(function (a) {
-                var xy = a.split('=');
-                params[xy[0]] = xy[1];
-            });
-        }
+        // 检查是否有url rewrite
+        _small_spa_conf_1.UrlRewrite.forEach(function (rule) {
+            var _from = rule._from, _to = rule._to;
+            var _fromType = Object.prototype.toString.call(_from).slice(8, -1);
+            if (_fromType === 'String') {
+                if (_from === url) {
+                    url = _to;
+                }
+            }
+            else if (_fromType === 'RegExp') {
+                var matchObj_1 = url.match(_from);
+                if (matchObj_1) {
+                    var toUrl = _to.replace(/\$(\d+)/g, function (a, b) {
+                        return matchObj_1[b];
+                    });
+                    var i = toUrl.indexOf('?');
+                    if (i != -1) {
+                        url = toUrl.slice(0, i);
+                        if (qstr) {
+                            qstr += '&';
+                        }
+                        qstr += toUrl.slice(i + 1);
+                    }
+                }
+            }
+        });
+        var params = this.getQuerysring(qstr);
         return { url: url, params: params };
     };
     SSpa.$event = $('<div/>');
