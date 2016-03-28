@@ -96,9 +96,10 @@ class PageMod{
             let $script = $(script)
             let src = $script.attr('src')
 
-            $defers.push(
-                Loader.loadJs(src)
-            )
+            Loader.loadJs(src)
+            // $defers.push(
+            //     Loader.loadJs(src)
+            // )
         })
 
         $links.remove()

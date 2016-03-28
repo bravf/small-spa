@@ -81,7 +81,10 @@ var PageMod = (function () {
         $scripts.each(function (_, script) {
             var $script = $(script);
             var src = $script.attr('src');
-            $defers.push(_loader_1.Loader.loadJs(src));
+            _loader_1.Loader.loadJs(src);
+            // $defers.push(
+            //     Loader.loadJs(src)
+            // )
         });
         $links.remove();
         $scripts.remove();
