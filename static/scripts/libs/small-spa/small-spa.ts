@@ -194,14 +194,14 @@ class SSpa{
         // 检查是否有url rewrite
         UrlRewrite.forEach((rule)=>{
             let {_from, _to} = rule
-            let _fromType = Object.prototype.toString.call(_from).slice(8, -1)
+            let fromType = Object.prototype.toString.call(_from).slice(8, -1)
 
-            if (_fromType === 'String'){
+            if (fromType === 'String'){
                 if (_from === url){
                     url = _to
                 }
             }
-            else if (_fromType === 'RegExp'){
+            else if (fromType === 'RegExp'){
                 let matchObj = url.match(_from)
                 if (matchObj){
                     let toUrl = _to.replace(/\$(\d+)/g, function (a, b){

@@ -165,13 +165,13 @@ var SSpa = (function () {
         // 检查是否有url rewrite
         _small_spa_conf_1.UrlRewrite.forEach(function (rule) {
             var _from = rule._from, _to = rule._to;
-            var _fromType = Object.prototype.toString.call(_from).slice(8, -1);
-            if (_fromType === 'String') {
+            var fromType = Object.prototype.toString.call(_from).slice(8, -1);
+            if (fromType === 'String') {
                 if (_from === url) {
                     url = _to;
                 }
             }
-            else if (_fromType === 'RegExp') {
+            else if (fromType === 'RegExp') {
                 var matchObj_1 = url.match(_from);
                 if (matchObj_1) {
                     var toUrl = _to.replace(/\$(\d+)/g, function (a, b) {
