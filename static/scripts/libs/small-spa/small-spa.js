@@ -111,6 +111,9 @@ var Page = (function () {
     Page.show = function (url) {
         var page = Page.getPage(url);
         var $defers = [];
+        if (!page) {
+            return false;
+        }
         page.modules.forEach(function (modName) {
             $defers.push(PageMod.loadMod(modName));
         });
@@ -140,7 +143,7 @@ var SSpa = (function () {
         return this;
     };
     SSpa.getHash = function () {
-        var hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/);
+        var hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/) || [];
         var url = hashInfo[1] || '';
         var paramStr = hashInfo[2];
         if (url[0] == '/') {

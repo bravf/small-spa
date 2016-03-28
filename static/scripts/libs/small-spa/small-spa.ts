@@ -126,6 +126,10 @@ class Page{
         let page = Page.getPage(url)
         let $defers = []
 
+        if (!page){
+            return false
+        }
+
         page.modules.forEach((modName) => {
             $defers.push(
                 PageMod.loadMod(modName)
@@ -162,7 +166,8 @@ class SSpa{
     }
 
     static getHash(){
-        let hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/)
+        let hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/) || []
+
         let url = hashInfo[1] || ''
         let paramStr = hashInfo[2]
 
