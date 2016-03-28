@@ -139,12 +139,19 @@ var SSpa = (function () {
     SSpa.getHash = function () {
         var hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/);
         var url = hashInfo[1] || '';
-        var params = hashInfo[2] || '';
+        var paramStr = hashInfo[2];
         if (url[0] == '/') {
             url = url.slice(1);
         }
         if (url.slice(-1) == '/') {
             url = url.slice(0, -1);
+        }
+        var params = {};
+        if (paramStr) {
+            paramStr.split('&').forEach(function (a) {
+                var xy = a.split('=');
+                params[xy[0]] = xy[1];
+            });
         }
         return { url: url, params: params };
     };

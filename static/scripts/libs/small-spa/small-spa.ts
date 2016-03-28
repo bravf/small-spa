@@ -163,13 +163,21 @@ class SSpa{
     static getHash(){
         let hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/)
         let url = hashInfo[1] || ''
-        let params = hashInfo[2] || ''
+        let paramStr = hashInfo[2]
 
         if (url[0] == '/'){
             url = url.slice(1)
         }
         if (url.slice(-1) == '/'){
             url = url.slice(0, -1)
+        }
+
+        let params = {}
+        if (paramStr) {
+            paramStr.split('&').forEach((a) => {
+                let xy = a.split('=')
+                params[xy[0]] = xy[1]
+            })
         }
 
         return {url, params}
