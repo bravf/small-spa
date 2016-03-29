@@ -37,6 +37,7 @@ class PageMod{
     constructor(public modName, public modPath, public container){}
     public show(){
         if (!this.appended) {
+            this.appended = true
             this.$html.appendTo($(this.container))
         }
 
@@ -96,10 +97,9 @@ class PageMod{
             let $script = $(script)
             let src = $script.attr('src')
 
-            Loader.loadJs(src)
-            // $defers.push(
-            //     Loader.loadJs(src)
-            // )
+            $defers.push(
+                Loader.loadJs(src)
+            )
         })
 
         $links.remove()

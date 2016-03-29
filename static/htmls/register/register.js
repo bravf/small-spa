@@ -1,5 +1,6 @@
 SSpa
     .onModShow('register', function () {
+    $('.register .js-name').val(123);
     console.log('register show');
 })
     .onModHide('register', function () {
