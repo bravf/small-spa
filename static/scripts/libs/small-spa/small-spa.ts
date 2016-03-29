@@ -226,11 +226,15 @@ class SSpa{
 
         return {url, params}
     }
+
+    static show(){
+        Page.show(SSpa.getHash().url)
+    }
+}
+
+SSpa.show()
+window.onhashchange = ()=>{
+    SSpa.show()
 }
 
 this.SSpa = SSpa
-
-Page.show(SSpa.getHash().url)
-window.onhashchange = ()=>{
-    Page.show(SSpa.getHash().url)
-}

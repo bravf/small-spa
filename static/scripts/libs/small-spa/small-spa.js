@@ -191,11 +191,14 @@ var SSpa = (function () {
         var params = this.getQuerysring(qstr);
         return { url: url, params: params };
     };
+    SSpa.show = function () {
+        Page.show(SSpa.getHash().url);
+    };
     SSpa.$event = $('<div/>');
     return SSpa;
 }());
-this.SSpa = SSpa;
-Page.show(SSpa.getHash().url);
+SSpa.show();
 window.onhashchange = function () {
-    Page.show(SSpa.getHash().url);
+    SSpa.show();
 };
+this.SSpa = SSpa;
