@@ -1,10 +1,7 @@
 declare var $, SSpa
 
-$('.register .js-name').val(123)
-
-SSpa
-.onModShow('register', ()=>{
-
+SSpa.onModShow('register', ()=>{
+    $('.register .js-name').val(123)
     console.log('register show')
 })
 .onModHide('register', ()=>{

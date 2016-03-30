@@ -6,11 +6,9 @@ import {Loader} from "./_loader"
 class PageMod{
     // statics
     static mods = {}
-
     static getMod(modName){
         return this.mods[modName]
     }
-
     static loadMod(modName){
         var $defer = $.Deferred()
         var mod = PageMod.mods[modName]
@@ -29,16 +27,40 @@ class PageMod{
     }
 
     // prototypes
-    public title = ''
-    public $html = $('<div/>')
+    public title
+    public $html
     public loaded = false
     public appended = false
 
+    //这个东西是为了第一次触发mod.show时候依赖js文件，第一次用完之后就销毁
+    public jsFilesDefer
+
     constructor(public modName, public modPath, public container){}
     public show(){
+        //检查自己是否下载完毕
+        if (!this.$html){
+            return false
+        }
+
+        //检查容器是否ready
+        let $container = $(this.container)
+        if (!$container.length){
+            return false
+        }
+
+        //检查是否已经插入文档
         if (!this.appended) {
             this.appended = true
-            this.$html.appendTo($(this.container))
+            this.$html.appendTo($container)
+        }
+
+        //如果已经是显示状态
+        if (this.$html.css('display') != 'none') {
+            return false
+        }
+
+        if (this.title) {
+            document.title = this.title
         }
 
         this.$html.parent().find('div[sspa-mod-id]').each((_, modDiv)=>{
@@ -51,7 +73,15 @@ class PageMod{
                 $mod.show()
                 //如果之前是隐藏状态，则触发mod的show事件
                 if (!isShow){
-                    SSpa.$event.trigger(`SSpa_mod_${modName}.show`)
+                    if (this.jsFilesDefer) {
+                        this.jsFilesDefer.done(() => {
+                            SSpa.$event.trigger(`SSpa_mod_${modName}.show`)
+                            this.jsFilesDefer = null
+                        })
+                    }
+                    else {
+                        SSpa.$event.trigger(`SSpa_mod_${modName}.show`)
+                    }
                 }
             }
             else {
@@ -70,10 +100,10 @@ class PageMod{
         let time = +new Date
 
         $.get(`${BaseURL}${this.modPath}?_t=${time}`).done((html) => {
-            this.__loadResources(html).done(() => {
-                $defer.resolve()
-            })
+            this.__loadResources(html)
+            $defer.resolve()
         })
+
         return $defer
     }
     __loadResources(html){
@@ -87,9 +117,7 @@ class PageMod{
             let $link = $(link)
             let href = $link.attr('href')
 
-            $defers.push(
-                Loader.loadCss(href)
-            )
+            Loader.loadCss(href)
         })
 
         let $scripts = $html.find('script[src]')
@@ -105,7 +133,7 @@ class PageMod{
         $links.remove()
         $scripts.remove()
 
-        return $.when.apply(null, $defers)
+        this.jsFilesDefer = $.when.apply(null, $defers)
     }
 }
 
@@ -118,27 +146,30 @@ for (let modName in PageMods){
 
 class Page{
     // statics
+    static currPage:Page
     static pages = {}
     static getPage(url){
         return Page.pages[url]
     }
+    static showMods(){
+        if (!this.currPage){
+            return false
+        }
+
+        this.currPage.modules.forEach((modName)=>{
+            PageMod.getMod(modName).show()
+        })
+    }
     static show(url) {
-        let page = Page.getPage(url)
-        let $defers = []
+        let page = this.currPage = Page.getPage(url)
 
         if (!page){
             return false
         }
 
         page.modules.forEach((modName) => {
-            $defers.push(
-                PageMod.loadMod(modName)
-            )
-        })
-
-        $.when.apply(null, $defers).done(()=>{
-            page.modules.forEach((modName)=>{
-                PageMod.getMod(modName).show()
+            PageMod.loadMod(modName).done(()=>{
+                this.showMods()
             })
         })
     }
@@ -154,17 +185,14 @@ Pages.forEach((page)=>{
 
 class SSpa{
     static $event = $('<div/>')
-
     static onModShow(modName, func){
         this.$event.on(`SSpa_mod_${modName}.show`, func)
         return this
     }
-
     static onModHide(modName, func){
         this.$event.on(`SSpa_mod_${modName}.hide`, func)
         return this
     }
-
     static getQuerysring(qstr){
         let params = {}
 
@@ -177,7 +205,6 @@ class SSpa{
 
         return params
     }
-
     static getHash(){
         let hashInfo = location.hash.match(/^#([^\?]*)?\??(.*)?$/) || []
 
@@ -226,7 +253,6 @@ class SSpa{
 
         return {url, params}
     }
-
     static show(){
         Page.show(SSpa.getHash().url)
     }

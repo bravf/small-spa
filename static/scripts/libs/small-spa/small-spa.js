@@ -6,9 +6,6 @@ var PageMod = (function () {
         this.modName = modName;
         this.modPath = modPath;
         this.container = container;
-        // prototypes
-        this.title = '';
-        this.$html = $('<div/>');
         this.loaded = false;
         this.appended = false;
     }
@@ -31,8 +28,26 @@ var PageMod = (function () {
     };
     PageMod.prototype.show = function () {
         var _this = this;
+        //检查自己是否下载完毕
+        if (!this.$html) {
+            return false;
+        }
+        //检查容器是否ready
+        var $container = $(this.container);
+        if (!$container.length) {
+            return false;
+        }
+        //检查是否已经插入文档
         if (!this.appended) {
-            this.$html.appendTo($(this.container));
+            this.appended = true;
+            this.$html.appendTo($container);
+        }
+        //如果已经是显示状态
+        if (this.$html.css('display') != 'none') {
+            return false;
+        }
+        if (this.title) {
+            document.title = this.title;
         }
         this.$html.parent().find('div[sspa-mod-id]').each(function (_, modDiv) {
             var $mod = $(modDiv);
@@ -43,7 +58,15 @@ var PageMod = (function () {
                 $mod.show();
                 //如果之前是隐藏状态，则触发mod的show事件
                 if (!isShow) {
-                    SSpa.$event.trigger("SSpa_mod_" + modName + ".show");
+                    if (_this.jsFilesDefer) {
+                        _this.jsFilesDefer.done(function () {
+                            SSpa.$event.trigger("SSpa_mod_" + modName + ".show");
+                            _this.jsFilesDefer = null;
+                        });
+                    }
+                    else {
+                        SSpa.$event.trigger("SSpa_mod_" + modName + ".show");
+                    }
                 }
             }
             else {
@@ -61,9 +84,8 @@ var PageMod = (function () {
         var $defer = $.Deferred();
         var time = +new Date;
         $.get("" + _small_spa_conf_1.BaseURL + this.modPath + "?_t=" + time).done(function (html) {
-            _this.__loadResources(html).done(function () {
-                $defer.resolve();
-            });
+            _this.__loadResources(html);
+            $defer.resolve();
         });
         return $defer;
     };
@@ -75,20 +97,17 @@ var PageMod = (function () {
         $links.each(function (_, link) {
             var $link = $(link);
             var href = $link.attr('href');
-            $defers.push(_loader_1.Loader.loadCss(href));
+            _loader_1.Loader.loadCss(href);
         });
         var $scripts = $html.find('script[src]');
         $scripts.each(function (_, script) {
             var $script = $(script);
             var src = $script.attr('src');
-            _loader_1.Loader.loadJs(src);
-            // $defers.push(
-            //     Loader.loadJs(src)
-            // )
+            $defers.push(_loader_1.Loader.loadJs(src));
         });
         $links.remove();
         $scripts.remove();
-        return $.when.apply(null, $defers);
+        this.jsFilesDefer = $.when.apply(null, $defers);
     };
     // statics
     PageMod.mods = {};
@@ -108,22 +127,26 @@ var Page = (function () {
     Page.getPage = function (url) {
         return Page.pages[url];
     };
+    Page.showMods = function () {
+        if (!this.currPage) {
+            return false;
+        }
+        this.currPage.modules.forEach(function (modName) {
+            PageMod.getMod(modName).show();
+        });
+    };
     Page.show = function (url) {
-        var page = Page.getPage(url);
-        var $defers = [];
+        var _this = this;
+        var page = this.currPage = Page.getPage(url);
         if (!page) {
             return false;
         }
         page.modules.forEach(function (modName) {
-            $defers.push(PageMod.loadMod(modName));
-        });
-        $.when.apply(null, $defers).done(function () {
-            page.modules.forEach(function (modName) {
-                PageMod.getMod(modName).show();
+            PageMod.loadMod(modName).done(function () {
+                _this.showMods();
             });
         });
     };
-    // statics
     Page.pages = {};
     return Page;
 }());
