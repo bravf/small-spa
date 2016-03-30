@@ -20,6 +20,7 @@ export let Pages = [
     {
         url: 'login',
         mods: [
+
             'frame',
             'login'
         ]
@@ -27,8 +28,9 @@ export let Pages = [
     {
         url: 'register',
         mods: [
+            'register',
             'frame',
-            'register'
+            //'register'
         ]
     }
 ]

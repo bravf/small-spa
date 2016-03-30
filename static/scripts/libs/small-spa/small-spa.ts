@@ -101,6 +101,7 @@ class PageMod{
 
         $.get(`${BaseURL}${this.modPath}?_t=${time}`).done((html) => {
             this.__loadResources(html)
+            this.show()
             $defer.resolve()
         })
 

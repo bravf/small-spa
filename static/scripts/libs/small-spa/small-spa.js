@@ -85,6 +85,7 @@ var PageMod = (function () {
         var time = +new Date;
         $.get("" + _small_spa_conf_1.BaseURL + this.modPath + "?_t=" + time).done(function (html) {
             _this.__loadResources(html);
+            _this.show();
             $defer.resolve();
         });
         return $defer;

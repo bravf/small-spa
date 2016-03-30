@@ -26,8 +26,8 @@ exports.Pages = [
     {
         url: 'register',
         mods: [
+            'register',
             'frame',
-            'register'
         ]
     }
 ];
