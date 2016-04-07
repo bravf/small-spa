@@ -56,6 +56,8 @@ class PageMod {
 
         //如果已经是显示状态
         if (this.$html.css('display') != 'none') {
+            //不论之前什么状态，都触发isshow事件
+            SSpa.$event.trigger(`SSpa_mod_${this.modName}.isshow`)
             return false
         }
 
@@ -71,12 +73,15 @@ class PageMod {
             //如果是当前要显示的mod
             if (modName == this.modName) {
                 $mod.show()
+
                 //如果之前是隐藏状态，则触发mod的show事件
                 if (!isShow) {
                     if (this.jsFilesDefer) {
                         this.jsFilesDefer.done(() => {
                             SSpa.$event.trigger(`SSpa_mod_${modName}.ready`)
                             SSpa.$event.trigger(`SSpa_mod_${modName}.show`)
+                            //不论之前什么状态，都触发isshow事件
+                            SSpa.$event.trigger(`SSpa_mod_${modName}.isshow`)
                             this.jsFilesDefer = null
                         })
                     }
@@ -189,6 +194,10 @@ class SSpa {
     static $event = $('<div/>')
     static onModReady(modName, func) {
         this.$event.on(`SSpa_mod_${modName}.ready`, func)
+        return this
+    }
+    static onModIsShow(modName, func) {
+        this.$event.on(`SSpa_mod_${modName}.isshow`, func)
         return this
     }
     static onModShow(modName, func) {

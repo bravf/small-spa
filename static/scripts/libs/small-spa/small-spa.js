@@ -44,6 +44,8 @@ var PageMod = (function () {
         }
         //如果已经是显示状态
         if (this.$html.css('display') != 'none') {
+            //不论之前什么状态，都触发isshow事件
+            SSpa.$event.trigger("SSpa_mod_" + this.modName + ".isshow");
             return false;
         }
         if (this.title) {
@@ -62,6 +64,8 @@ var PageMod = (function () {
                         _this.jsFilesDefer.done(function () {
                             SSpa.$event.trigger("SSpa_mod_" + modName + ".ready");
                             SSpa.$event.trigger("SSpa_mod_" + modName + ".show");
+                            //不论之前什么状态，都触发isshow事件
+                            SSpa.$event.trigger("SSpa_mod_" + modName + ".isshow");
                             _this.jsFilesDefer = null;
                         });
                     }
@@ -161,6 +165,10 @@ var SSpa = (function () {
     }
     SSpa.onModReady = function (modName, func) {
         this.$event.on("SSpa_mod_" + modName + ".ready", func);
+        return this;
+    };
+    SSpa.onModIsShow = function (modName, func) {
+        this.$event.on("SSpa_mod_" + modName + ".isshow", func);
         return this;
     };
     SSpa.onModShow = function (modName, func) {
