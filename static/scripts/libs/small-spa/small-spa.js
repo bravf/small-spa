@@ -60,6 +60,7 @@ var PageMod = (function () {
                 if (!isShow) {
                     if (_this.jsFilesDefer) {
                         _this.jsFilesDefer.done(function () {
+                            SSpa.$event.trigger("SSpa_mod_" + modName + ".ready");
                             SSpa.$event.trigger("SSpa_mod_" + modName + ".show");
                             _this.jsFilesDefer = null;
                         });
@@ -158,6 +159,10 @@ _small_spa_conf_1.Pages.forEach(function (page) {
 var SSpa = (function () {
     function SSpa() {
     }
+    SSpa.onModReady = function (modName, func) {
+        this.$event.on("SSpa_mod_" + modName + ".ready", func);
+        return this;
+    };
     SSpa.onModShow = function (modName, func) {
         this.$event.on("SSpa_mod_" + modName + ".show", func);
         return this;
