@@ -208,6 +208,18 @@ class SSpa {
         this.$event.on(`SSpa_mod_${modName}.hide`, func)
         return this
     }
+    static onModEvents(modName, events) {
+        let modEvents = ['ready', 'isShow', 'show', 'hide']
+        for (let eventName in events) {
+            if (-1 != modEvents.indexOf(eventName)) {
+                let eventCallback = events[eventName]
+                let methodName = eventName[0].toUpperCase() + eventName.slice(1)
+                this[`onMod${methodName}`](modName, eventCallback)
+            }
+        }
+
+        return this
+    }
     static getQuerysring(qstr) {
         let params = {}
 
