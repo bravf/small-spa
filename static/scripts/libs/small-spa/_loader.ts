@@ -9,8 +9,14 @@ interface ILinkNode extends HTMLLinkElement {
 }
 
 export class Loader {
+    static cache = {}
     static loadJs(url) {
+        if (url in this.cache) {
+            return this.cache[url]
+        }
+
         let $defer = $.Deferred()
+        this.cache[url] = $defer
 
         Loader.__loadJs(url, () => {
             $defer.resolve()
@@ -19,7 +25,12 @@ export class Loader {
         return $defer
     }
     static loadCss(url) {
+        if (url in this.cache) {
+            return this.cache[url]
+        }
+
         let $defer = $.Deferred()
+        this.cache[url] = $defer
 
         Loader.__loadCss(url, () => {
             $defer.resolve()

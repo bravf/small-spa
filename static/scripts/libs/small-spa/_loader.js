@@ -3,14 +3,22 @@ var Loader = (function () {
     function Loader() {
     }
     Loader.loadJs = function (url) {
+        if (url in this.cache) {
+            return this.cache[url];
+        }
         var $defer = $.Deferred();
+        this.cache[url] = $defer;
         Loader.__loadJs(url, function () {
             $defer.resolve();
         });
         return $defer;
     };
     Loader.loadCss = function (url) {
+        if (url in this.cache) {
+            return this.cache[url];
+        }
         var $defer = $.Deferred();
+        this.cache[url] = $defer;
         Loader.__loadCss(url, function () {
             $defer.resolve();
         });
@@ -86,6 +94,7 @@ var Loader = (function () {
             }
         }
     };
+    Loader.cache = {};
     return Loader;
 }());
 exports.Loader = Loader;
