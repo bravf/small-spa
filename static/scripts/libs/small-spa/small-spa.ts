@@ -32,6 +32,9 @@ class PageMod {
     public loaded = false
     public appended = false
 
+    //每次hashchange只能执行一次isshow
+    public isshowOnce = false
+
     //这个东西是为了第一次触发mod.show时候依赖js文件，第一次用完之后就销毁
     public jsFilesDefer
 
@@ -56,8 +59,11 @@ class PageMod {
 
         //如果已经是显示状态
         if (this.$html.css('display') != 'none') {
-            //不论之前什么状态，都触发isshow事件
-            SSpa.$event.trigger(`SSpa_mod_${this.modName}.isshow`)
+            if (!this.isshowOnce) {
+                this.isshowOnce = true
+                //不论之前什么状态，都触发isshow事件
+                SSpa.$event.trigger(`SSpa_mod_${this.modName}.isshow`)
+            }
             return false
         }
 
@@ -175,6 +181,8 @@ class Page {
         }
 
         page.modules.forEach((modName) => {
+            //每一次page.show重置isshowOnce
+            PageMod.getMod(modName).isshowOnce = false
             PageMod.loadMod(modName).done(() => {
                 this.showMods()
             })

@@ -8,6 +8,8 @@ var PageMod = (function () {
         this.container = container;
         this.loaded = false;
         this.appended = false;
+        //每次hashchange只能执行一次isshow
+        this.isshowOnce = false;
     }
     PageMod.getMod = function (modName) {
         return this.mods[modName];
@@ -44,8 +46,11 @@ var PageMod = (function () {
         }
         //如果已经是显示状态
         if (this.$html.css('display') != 'none') {
-            //不论之前什么状态，都触发isshow事件
-            SSpa.$event.trigger("SSpa_mod_" + this.modName + ".isshow");
+            if (!this.isshowOnce) {
+                this.isshowOnce = true;
+                //不论之前什么状态，都触发isshow事件
+                SSpa.$event.trigger("SSpa_mod_" + this.modName + ".isshow");
+            }
             return false;
         }
         if (this.title) {
@@ -148,6 +153,8 @@ var Page = (function () {
             return false;
         }
         page.modules.forEach(function (modName) {
+            //每一次page.show重置isshowOnce
+            PageMod.getMod(modName).isshowOnce = false;
             PageMod.loadMod(modName).done(function () {
                 _this.showMods();
             });
@@ -177,6 +184,17 @@ var SSpa = (function () {
     };
     SSpa.onModHide = function (modName, func) {
         this.$event.on("SSpa_mod_" + modName + ".hide", func);
+        return this;
+    };
+    SSpa.onModEvents = function (modName, events) {
+        var modEvents = ['ready', 'isShow', 'show', 'hide'];
+        for (var eventName in events) {
+            if (-1 != modEvents.indexOf(eventName)) {
+                var eventCallback = events[eventName];
+                var methodName = eventName[0].toUpperCase() + eventName.slice(1);
+                this[("onMod" + methodName)](modName, eventCallback);
+            }
+        }
         return this;
     };
     SSpa.getQuerysring = function (qstr) {
