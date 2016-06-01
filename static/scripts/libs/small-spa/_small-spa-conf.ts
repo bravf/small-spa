@@ -1,5 +1,7 @@
 //export let baseURL = '//s1.mljr.com/crm-pc'
-export let BaseURL = '//127.0.0.1/crm-pc'
+//export let BaseURL = '//127.0.0.1/crm-pc'
+
+export let BaseURL = '/small-spa'
 
 export let PageMods = {
     frame: {

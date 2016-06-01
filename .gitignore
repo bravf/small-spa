@@ -3,6 +3,7 @@
 
 .sass-cache
 node_modules
+.fedog-cache
 
 *.css.map
 

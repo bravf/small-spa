@@ -62,6 +62,7 @@ class PageMod {
             if (!this.isshowOnce) {
                 this.isshowOnce = true
                 //不论之前什么状态，都触发isshow事件
+                SSpa.$event.trigger(`SSpa_mod_*.isshow`, [this.modName])
                 SSpa.$event.trigger(`SSpa_mod_${this.modName}.isshow`)
             }
             return false
@@ -84,14 +85,18 @@ class PageMod {
                 if (!isShow) {
                     if (this.jsFilesDefer) {
                         this.jsFilesDefer.done(() => {
+                            SSpa.$event.trigger(`SSpa_mod_*.ready`, [modName])
                             SSpa.$event.trigger(`SSpa_mod_${modName}.ready`)
+                            SSpa.$event.trigger(`SSpa_mod_*.show`, [modName])
                             SSpa.$event.trigger(`SSpa_mod_${modName}.show`)
                             //不论之前什么状态，都触发isshow事件
+                            SSpa.$event.trigger(`SSpa_mod_*.isshow`, [modName])
                             SSpa.$event.trigger(`SSpa_mod_${modName}.isshow`)
                             this.jsFilesDefer = null
                         })
                     }
                     else {
+                        SSpa.$event.trigger(`SSpa_mod_*.show`, [modName])
                         SSpa.$event.trigger(`SSpa_mod_${modName}.show`)
                     }
                 }
@@ -100,6 +105,7 @@ class PageMod {
                 $mod.hide()
                 //如果之前是显示状态，则触发mod的hide事件
                 if (isShow) {
+                    SSpa.$event.trigger(`SSpa_mod_*.hide`, [modName])
                     SSpa.$event.trigger(`SSpa_mod_${modName}.hide`)
                 }
             }

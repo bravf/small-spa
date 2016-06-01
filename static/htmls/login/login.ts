@@ -16,3 +16,9 @@ declare var $, Sspa
 // Sspa.onModShow(pagePath, () => {
 //     console.log('page-show')
 // })
+
+SSpa.onModEvents('login', {
+    isShow : _ => {
+        console.log('login')
+    }
+})
