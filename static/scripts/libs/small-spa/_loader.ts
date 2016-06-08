@@ -46,7 +46,7 @@ export class Loader {
         let isIE = navigator.userAgent.indexOf('MSIE') == -1 ? false : true
 
         if (isIE) {
-            node.onreadystatechange = () => {
+            node.onreadystatechange = node.onload = () => {
                 if (node.readyState && node.readyState == 'loading') {
                     return
                 }
