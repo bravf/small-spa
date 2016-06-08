@@ -43,23 +43,12 @@ export class Loader {
         node.setAttribute('src', url)
         document.getElementsByTagName('head')[0].appendChild(node)
 
-        let isIE = navigator.userAgent.indexOf('MSIE') == -1 ? false : true
-
-        if (isIE) {
-            node.onreadystatechange = node.onload = () => {
-                if (node.readyState && node.readyState == 'loading') {
-                    return
-                }
-                if (callback) {
+        node.onload = node.onreadystatechange = ()=> {
+            if (!node.readyState || node.readyState == 'loaded' || node.readyState == 'complete'){
+                if (callback){
                     callback()
                 }
-            }
-        }
-        else {
-            node.onload = function() {
-                if (callback) {
-                    callback()
-                }
+                node.onload = node.onreadystatechange = null
             }
         }
     }
