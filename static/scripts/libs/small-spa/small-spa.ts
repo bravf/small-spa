@@ -98,6 +98,13 @@ class PageMod {
                     else {
                         SSpa.$event.trigger(`SSpa_mod_*.show`, [modName])
                         SSpa.$event.trigger(`SSpa_mod_${modName}.show`)
+
+                        if (!this.isshowOnce) {
+                            this.isshowOnce = true
+                            //不论之前什么状态，都触发isshow事件
+                            SSpa.$event.trigger(`SSpa_mod_*.isshow`, [this.modName])
+                            SSpa.$event.trigger(`SSpa_mod_${this.modName}.isshow`)
+                        }
                     }
                 }
             }
@@ -110,8 +117,6 @@ class PageMod {
                 }
             }
         })
-
-        this.$html.show()
     }
     public load() {
         let $defer = $.Deferred()
