@@ -113,7 +113,6 @@ class Module{
 
         $.get(`${BaseURL}${this.path}?_t=${t}`).done((html) => {
             this.__loadSources(html)
-            this.show()
             $d.resolve()
         })
 
