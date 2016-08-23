@@ -68,7 +68,7 @@ class Module{
             document.title = this.title
         }
 
-        this.$html.parent().find('div[sspa-mod-id]').each((_, div) => {
+        $container.find('div[sspa-mod-id]').each((_, div) => {
             let $module = $(div)
             let name = $module.attr('sspa-mod-id')
             let isShow = $module.css('display') != 'none'
