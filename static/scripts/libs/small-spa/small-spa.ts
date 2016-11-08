@@ -287,10 +287,32 @@ class SSpa{
     }
 }
 
-
-SSpa.show()
-window.onhashchange = () => {
-    SSpa.show()
+// 修正hashchang事件
+function registerHashChange(hashChange) {
+    if (!('onhashchange' in window)) {
+        var oldHref = location.href;
+        setInterval(function() {
+            var newHref = location.href;
+            if (oldHref !== newHref) {
+                var _oldHref = oldHref;
+                oldHref = newHref;
+                hashChange.call(window, {
+                    'type': 'hashchange',
+                    'newURL': newHref,
+                    'oldURL': _oldHref
+                });
+            }
+        }, 100);
+    } else if (window.addEventListener) {
+        window.addEventListener("hashchange", hashChange, false);
+    }
+    else if (window.attachEvent) {
+        window.attachEvent("onhashchange", hashChange);
+    }
 }
 
+SSpa.show()
+registerHashChange(_=>{
+    SSpa.show()
+})
 this.SSpa = SSpa
