@@ -1,7 +1,11 @@
 declare let $
-
-import {BaseURL, PageMods, Pages, UrlRewrite} from "./_small-spa-conf"
 import {Loader} from "./_loader"
+
+//全局变量
+let BaseURL
+let PageMods
+let Pages
+let UrlRewrite
 
 class Module{
     static modules = {}
@@ -109,9 +113,8 @@ class Module{
 
     public load(){
         let $d = $.Deferred()
-        let t = + new Date
 
-        $.get(`${BaseURL}${this.path}?_t=${t}`).done((html) => {
+        $.get(`${BaseURL}${this.path}`).done((html) => {
             this.__loadSources(html)
             $d.resolve()
         })
@@ -186,19 +189,6 @@ class Page{
 
     constructor(public url, public modules) { }
 }
-
-//根据配置生成模块对象
-for (let name in PageMods){
-    let obj = PageMods[name]
-
-    Module.modules[name] = new Module(name, obj.modPath, obj.container)
-}
-
-//根据配置生成页面对象
-Pages.forEach((page) => {
-    Page.pages[page.url] = new Page(page.url, page.mods)
-})
-
 
 class SSpa{
     static $event = $('<div/>')
@@ -285,7 +275,33 @@ class SSpa{
     static show() {
         Page.show(SSpa.getHash().url)
     }
+
+    static init(_BaseURL, _PageMods, _Pages, _UrlRewrite) {
+        BaseURL = _BaseURL
+        PageMods = _PageMods
+        Pages = _Pages
+        UrlRewrite = _UrlRewrite
+
+        //根据配置生成模块对象
+        for (let name in PageMods){
+            let obj = PageMods[name]
+
+            Module.modules[name] = new Module(name, obj.modPath, obj.container)
+        }
+
+        //根据配置生成页面对象
+        Pages.forEach((page) => {
+            Page.pages[page.url] = new Page(page.url, page.mods)
+        })
+
+        SSpa.show()
+        registerHashChange(_=>{
+            SSpa.show()
+        })
+    }
 }
+
+this.SSpa = SSpa
 
 // 修正hashchang事件
 function registerHashChange(hashChange) {
@@ -306,13 +322,8 @@ function registerHashChange(hashChange) {
     } else if (window.addEventListener) {
         window.addEventListener("hashchange", hashChange, false);
     }
-    else if (window.attachEvent) {
-        window.attachEvent("onhashchange", hashChange);
+    else if (window['attachEvent']) {
+        window['attachEvent']("onhashchange", hashChange);
     }
 }
 
-SSpa.show()
-registerHashChange(_=>{
-    SSpa.show()
-})
-this.SSpa = SSpa
